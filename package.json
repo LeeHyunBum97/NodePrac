@@ -1,0 +1,19 @@
+{
+  "name": "prac1",
+  "version": "1.0.0",
+  "description": "prac1",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeeHyunBum97/NodePrac.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LeeHyunBum97/NodePrac/issues"
+  },
+  "homepage": "https://github.com/LeeHyunBum97/NodePrac#readme"
+}
