@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon ExpressServer"
+    "start": "nodemon ExpressServerTest2"
   },
   "author": "",
   "license": "ISC",
