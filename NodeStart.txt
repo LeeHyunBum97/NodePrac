@@ -511,3 +511,69 @@ P.S.
       => Serverless는 서버가 없는 것이 아니라 서버를 직접 구현할 필요가 없다는 뜻.(애플리케이션 서버를 구현하지 않고 다른곳에서 만든것을 사용.)
       => 웹 브라우저에서 서버에게 요청하는 것을 request라고 하고, 서버가 웹 브라우저에게 대답하는 것은 response라고 한다.
          어떤 웹 프로그램을 써도 같은 것 -> 무엇을 요청/응답하는지 찾아보는데 사용.
+
+12. http 모듈
+   => http모듈은 내장 모듈이므로 별도로 설치할 필요가 없음
+   1) 서버생성
+      http모듈.createserver((request, response) => {
+         내용
+      });
+
+   2) 서버실행
+      서버객체.listen(포트번호, 아이피주소); // 아이피 주소는 현재 컴퓨터에 여러 IP주소가 존재할 경우 작성
+
+   3) 서버종료
+      서버객체.close();
+
+   4) 서버에서 발생하는 이벤트
+      request: 클라이언트의 요청이 있을 때
+      connection: 클라이언트가 접속했을 때
+      clientError: 클라이언트 오류가 발생했을 때
+   
+   5) request객체
+      => url: 요청한 url
+      => method: 요청방식(GET, POST, PUT, PATCH, DELETE, OPTION, HEAD 등)
+   
+   6) 웹 서버 만들고 직접 응답을 생성하기
+      // http모듈로 서버 만들기
+         const http = require("http");
+
+         // 서버생성, 포트번호는 일반적으로 1024번까지는 예약되어 있으므로 사용X, 1521, 3306, 27017 번은 DB에서 사용하고 있음
+         // 8080은 tomcat 같은 webcontainer가 사용,
+         // 80번을 사용할 경우 http 경우 포트 번호 생략
+         // 433번을 사용할 경우 https라면 포트번호 생략
+         http.createServer((request, response) =>{
+            // 응답생성
+            response.writeHead(200, {'Content-type':'text/html;charset=utf-8'});
+            response.write("<h1> 처음만든 웹 서버</h1>");
+            response.end('<p>http 모듈 사용</p>')
+         }).listen(8000, () => {
+            console.log('8000번 포트에서 서버 대기 중');
+         });
+      => 서버를 실행 한후 8000번 포트에서 서버 대기 중 확인 후
+      => 클라이언트 접속은 브라우저를 실행하고 url에 본인의 컴퓨터인 경우 http://localhost:5000 or http://127.0.0.1:8000
+         다른 컴퓨터인 경우 http://서버컴퓨터IP:포트번호 로 접속(서버 컴퓨터 방화벽이 해제되어 있어야한다.)
+      
+      => 서버중지는 터미널에서 ctrl+c, 안되면 메시지 확인.
+   
+   7) 서버에서 html 파일을 읽어서 출력
+      const fs = require("fs").promises;
+      const http = require("http");
+      http.createServer(async(request, response) =>{
+         try{
+            //파일의 내용을 읽어서 data에 저장
+            // 다음 명령은 이명령이 끝난 뒤시행
+            
+            const data = await fs.readFile("./HttpServerIndex.html");
+            response.writeHead(200, {'Content-type' : 'text/html; charset=utf-8'});
+            response.end(data);
+         } catch(errro){
+            const data = await fs.readFile("./HttpServerIndex.html");
+            response.writeHead(500, {'Content-type' : 'text/html; charset=utf-8'});
+            response.end(error.message);
+         }
+
+      }).listen(8000, () => {
+         console.log('8000번 포트에서 서버 대기 중');
+      });
+    => 포트번호가 같은 서버를 동시에 띄우면 에러발생.
