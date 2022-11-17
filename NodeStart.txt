@@ -711,6 +711,11 @@ P.S.
       app.put
       app.patch
       app.options
+
+      => // 사용자의 요청 처리 중 '/'로 경로를 설정한다면 자동으로 Entry point로 요청과 응답에 대해 처리한다.
+            app.get('/', (req, res) => { 
+               res.sendFile(path.join(__dirname,'./ExpressServerTest.html'));
+            })
    
    2) 함수의 매개변수
       => 첫번째 url
@@ -722,4 +727,17 @@ P.S.
       => html 파일 출력 : response.sendFile(html경로)
 
    4) 구동시 npm start와 node 명령어를 사용할 수 있는데 entry point를 사용하기 위해서는 전자를 사용하는 것을 권장
-   
+
+22. 요청객체 : 일반적으로 request(req)
+   => 클라이언트의 요청 정보를 저장하고 있는 객체
+   => req.app : app 객체에 접근하게 된다.
+   => req.body : body-parser 미들웨어가 만드는 요청의 본문을 해석한 객체
+                 POST, PUT에 대한 요청이 왔을 때 Parameter를 읽기 위해서 사용
+   => req.cookies : 쿠키 정보를 가지는 객체
+   => req.ip : 요청을 전송한 클라이언트의 ip 정보 --> ip를 알면 접속한 국가를 알 수 있다(IP는 국가 단위로 할당.)
+      ~ 요청이 올 때마다 파일을 날짜별로 만들어서 로깅하여 기록하는 것,
+   => req.parmas : 라우트 매개변수에 담긴 정보
+   => req.query : query string - get이나 delete 요청에서 파라미터 읽기
+   => req.get(헤더이름) : 헤더의 값 가져오기, 인증에서 많이 사용, 최근에는 API 사용권한을 토큰을 이용해 발급하고 토큰의 값을 헤더에 저장해서
+                         전송하도록 만드는 경우가 많다
+   => req.signedCookies : 서명된 쿠키

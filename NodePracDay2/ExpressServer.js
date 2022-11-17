@@ -7,6 +7,8 @@ app.set('port', 8000);
 
 // 사용자의 요청 처리
 app.get('/', (req, res) => {
+    console.log(req.ip); // 접속자의 ip를 콘솔에 출력 나는 ::1(IPv6), 127.0.0.1(IPv4)
+    console.log(req.query) // 클라이언트 에서 보낸 메서드 요청에 대한 parameter값을 콘솔로 확인가능.
     res.sendFile(path.join(__dirname,'./ExpressServerTest.html'));
 })
 
