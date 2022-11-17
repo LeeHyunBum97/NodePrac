@@ -413,3 +413,36 @@ P.S : 소스코드 -> 컴파일(번역-소스코드를 이해할 수 있는 코�
     => 포트를 사용중인 프로세스 찾기
         Windows: netstat -ano | fubdstr 포트번호
         그 이외 : lsof -l tcp : 포트번호
+
+11. NPM(Node Package Manager)
+   => 노드에서 패키지 매니저인데 지금은 거의 모든 JS라이브러리들이 저장소에 있기 때문에 JS라이브러리들은 거의 모두 NPM을 용해서 사용
+
+   1) package.json
+      => 노드에서 패키지 관리를 위한 설정파일
+      => java에서 build.gradle이나 pom.xml의 역할을 수행
+      => 패키지를 설치하게 되면 패키지에 대한 정보가 전부 작성된다.
+         패키지를 설치하게 되면 package-lock.json파일이 생성되는데 package.json에는 직접 설치한 패키지에 대한 정보만 기재
+         package-lock.json에는 의존관계가 있는 모든 패키지가 기재되어 있다.
+
+   2) 패키지 설치
+      => npm install 패키지이름 나열 (나열할 때는 공백으로 구분) 
+      => 개발 과정에서만 사용하고 배포할 때 제외하려면 패키지 이름 앞에 --save-dev를 추가 하면 된다.
+      => 모든 프로젝트에서 사용할 수 있도록 하기 위해서는 패키지 이름앞에 -g를 추가해 global모드로 설치하면 되는데, 현재는 경고가 발생해
+         --location=global로 설정하기를 권장한다.
+         Mac, Linux에서 global로 설치할 때는 맨 앞에 관리자 모드를 의미하는 sudo를 추가해야한다.(sudo npm install --location=global 패키지이름)
+         처음 한 번은 관리자 비밀번호를 입력되야 한다.
+      
+      => 설치된 패키지는 프로젝트 내의  node_modules라는 디렉터리에 저장되며, 전역으로 설치했는데 패키지가 잘 불러지지 않으면 로컬로 설치해서
+         사용하면 된다.
+         전역설치 된 패키지가 잘 동작하지 않는 이유중 하나는 node명령에 대한 path설정이 안되었거나 node 설치에 이상이 있을 가능성이 높다.         
+
+   3) 패키지 설치
+      => 프로젝트 생성 -> package.json 만들어졌는지 확인
+      =>
+
+P.S. 
+1) Web Server : 다른 곳에서 URL을 이용해서 사용할 수 있도록 해주는 서버 (일을 직접하는 것이 아니라 리소스에 접근하게 해준다.)
+
+2) Web Application Server :  URL과 작업을 매핑해서 URL을 호출하면 작업을 수행하도록 해주는 서버 - JAVA에는 Tocat/Jeuse
+
+3) Application Server : 실제 필요한 작업을 해주는 서버
