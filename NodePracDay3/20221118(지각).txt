@@ -25,3 +25,30 @@ Routing
 URL의 일부분을 파라미터로 사용하기
 => 최근에는 파라미터 1개인 경우 파라미터를 만들어주지않고 URL에 포함 시킨다.
 => 처리하는 URL을 설정할 때 경로/:변수명 의 형태로 작성한 후 내부에서 req.params.변수명을 사용하면 된다.
+
+
+ Front Controller 패턴 
+ => 클라이언트의 모든 요청을 app.js가 받아서 각각의 라우팅 파일에서 실제로 처리해준다.
+    서버 애플리케이션 관련된 설정은 app.js에서 하고 실제처리는 각 라우팅 파일에서 수행하도록 합니다.
+    모든 요청이 먼저 들어오게 되는 app.js를 Fornt-Controller라 하고 실제 처리를 담당하는 라우팅 파일들을 page-Controller라고 합니다.
+
+*** 템플릿 엔진 ***
+=> 서버의 데이터를 HTML에 합쳐서 출력할 수 있도록 해주는 라이브러리
+=> 거의 모든 framework들이 가지고 있으며 종류가 다양함
+=> 서버에서 뷰를 만들어서 클라이언트에게 제공하겠다는 의미
+=> 템플릿 엔진을 사용하려면 템플릿 엔진에 대한 별도의 학습(HTML, CSS, JS 이외의 학습)이 필요하다.
+
+1. Jade
+=> 지금은 저작권 문제로 pug로 개명, https://pugsjs.org/api/getting-started.html 에서 도큐먼트 확인
+=> npm install pug
+=> 설정
+   app.set('views',path.join(__dirname, '출력할 html파일 위치'));
+   app.set('view engine', 'pug');
+
+=> 처리
+   res.render('html 파일 경로', 데이터)
+
+=> html 파일에서 데이터를 pug 문법에 맞춰 출력
+   
+2. nunjucks
+=> node에서 사용하는 템플릿 엔진 중 하나

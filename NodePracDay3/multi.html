@@ -21,7 +21,7 @@
             const formData = new FormData();
             // 내용 추가
             let files = document.getElementById("image").files;
-            for(let idx=0; idx<files.length-1; idx++) {
+            for(let idx=0; idx<files.length; idx++) {
                 formData.append('image', document.getElementById("image").files[idx]);
             }
             formData.append('title', document.getElementById('title').value);
@@ -30,7 +30,7 @@
             xhr.open('POST', "/multi", true);
             xhr.send(formData);
 
-            console.log(xhr.responseText);
+            console.log(formData);
 
             xhr.addEventListener('load', (e) => {
                 // 서버가 JSON 문자열을 파싱
@@ -39,7 +39,7 @@
                 
                 // 파싱한 결과를 출력
                 alert(result.result);
-            })
+            });
         })
     </script>
 </body>

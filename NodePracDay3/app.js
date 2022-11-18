@@ -1,6 +1,7 @@
 // 웹 서버 모듈 가져오기
 const express = require('express');
 
+
 // .env 파일의 내용을 읽어서 process.env에 저장해주는 모듈
 const dotenv = require('dotenv');
 // .env 읽어오기
@@ -110,10 +111,9 @@ app.get('/multi', (req,res)=>{
 });
 
 app.post('/multi', upload.array('image'), (req, res) => {
-    // node에서 json전송
-    let result = {"result" : "sucsess"};
+    console.log(req.files)
     res.json();
-    
+    res.send('Upload file = ' + req.files);
 });
 
 
@@ -124,6 +124,19 @@ const boardRouter = require('./routes/board');
 
 // url과 매핑, "url"의 요청을 변수로 처리
 app.use("/", indexRouter); // 루트 경로는 indexRouter에서 처리
+
+//res.render로 출력할 때 사용할 디렉터리 설정
+/* app.set('views', path.join(__dirname, 'views'));
+// 템플릿 엔진은 pug를 사용하겠다고 설정
+app.set('view engine', 'pug');
+
+app.use("/", (req,res) => {
+    //템플릿 엔진으로 출력
+    // ./views/index.html로 출력된다
+    res.render('index', {'title':'pug', 'aespa' : ['카리나', '지젤', '윈터']});
+})
+ */
+
 app.use("/user", userRouter); // /user 경로는 userRouter에서 처리
 app.use("/board", boardRouter); // /board 경로는 boardRouter에서 처리
 
