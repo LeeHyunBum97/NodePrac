@@ -3,3 +3,25 @@
 코드로 해결하는 방법도 있다.
 
 app.js 파일의 파일 업로드 설정을 변경한다.
+
+Routing
+=> 최적의 경로를 탐색하는 것
+=> 사용자의 요청을 처리하는 부분을 모듈화하는 것 웹 애플리케이션 서버가 커지면 처리해야할 URL이 늘어나는데 이를 하나의 파일에서 전부 처리하면
+   가독성이 떨어지게 됨으로 url을 모듈화 해서 처리
+=> 라우팅 - 기본 요청과 user가 포함된 요청과 board가 포함된 요청을 분리해서 구현
+            user.js 파일을 만들고 user가 포함된 요청을 처리하는 코드를 구현
+            board.js파일을 만들고 board가 포함된 요청을 처리하는 코드 구현
+            
+            <in app.js>
+            const indexRouter = require('./index');
+            const userRouter = require('./user');
+            const boardRouter = require('./board');
+
+            // url과 매핑, "url"의 요청을 변수로 처리
+            app.use("/", indexRouter);
+            app.use("/user", userRouter);
+            app.use("/board", boardRouter);
+
+URL의 일부분을 파라미터로 사용하기
+=> 최근에는 파라미터 1개인 경우 파라미터를 만들어주지않고 URL에 포함 시킨다.
+=> 처리하는 URL을 설정할 때 경로/:변수명 의 형태로 작성한 후 내부에서 req.params.변수명을 사용하면 된다.

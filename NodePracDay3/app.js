@@ -86,9 +86,9 @@ const upload = multer({
 })
 
 //포트번호(localhost:3000 -> ContextPath) 까지 요청 처리
-app.get('/', (req,res) => {
+/* app.get('/', (req,res) => {
     res.sendFile(path.join(__dirname, './index.html'));
-});
+}); */
 
 // 하나의 파일 업로드 처리
 app.get('/single', (req,res)=>{
@@ -109,14 +109,23 @@ app.get('/multi', (req,res)=>{
     res.sendFile(path.join(__dirname, '/multi.html'));
 });
 
-app.post('/multi', upload.single('image'), (req, res) => {
-    //title 파라미터 읽기
-    //post 방식에서의 파라미터는 req.body.파라미터이름
-    console.log(req.body.title);
-    console.log(req.file.originalname);
-    res.send('성공');
-
+app.post('/multi', upload.array('image'), (req, res) => {
+    // node에서 json전송
+    let result = {"result" : "sucsess"};
+    res.json();
+    
 });
+
+
+// 라우터 파일 가져오기
+const indexRouter = require('./routes/index.js');
+const userRouter = require('./routes/user');
+const boardRouter = require('./routes/board');
+
+// url과 매핑, "url"의 요청을 변수로 처리
+app.use("/", indexRouter); // 루트 경로는 indexRouter에서 처리
+app.use("/user", userRouter); // /user 경로는 userRouter에서 처리
+app.use("/board", boardRouter); // /board 경로는 boardRouter에서 처리
 
 //웹 서버 실행
 app.listen(app.get('port'), ()=>{
