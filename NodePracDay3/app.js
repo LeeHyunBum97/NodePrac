@@ -111,9 +111,8 @@ app.get('/multi', (req,res)=>{
 });
 
 app.post('/multi', upload.array('image'), (req, res) => {
-    console.log(req.files)
-    res.json();
-    res.send('Upload file = ' + req.files);
+    let result = {"result":"success"};
+    res.json(result);
 });
 
 
