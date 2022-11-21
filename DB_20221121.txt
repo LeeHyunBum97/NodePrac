@@ -1,0 +1,121 @@
+[DB 사용]
+    - 로컬 DB
+        임시저장
+    
+    - 외부 DB 
+        서버
+
+    - SQL Lite나 Access 는 로컬에 설치해서 사용하며, DB를 빠르게 또는 Offline 상태에서 사용하기 위한 목적
+    
+    - 그 외의 DB는 대부분의 경우 외부에 설치해서 애플리케이션 서버를 통해서 사용하거나 직접사용(DBA나 Operator)한다.
+
+    - Docker 는 회원가입 하고 설치
+
+    - Windows 에서 Docker를 사용하기 위해서는 리눅스 커널을 설치해야한다. 
+
+    - Root 계정 즉, 관리자 계정은 외부에서 사용하도록 하면 절대 안된다.
+
+    
+
+[Maria DB]
+
+1. 개요
+
+    => SQL에 기반을 둔 RDBMS(관계형 데이터베이스로)로 Open Source 형태로 제공
+    => MySQL 개발자가 만들어서 MySQL과 거의 유사 
+    => SQL 도 거의 차이가 없음
+
+    => DB > Table
+    => 하나의 DB는 여러 사용자가 공유
+ 
+2. 설치
+
+    1) OS에 직접 설치
+        
+        => windows
+            https://www.mariadb.org/download
+        
+        => Mac
+            brew install mariadb 이나 패키지 관리자를 이용해서 설치
+    
+    2) 가상화 컨테이너 설치
+        => docker와 같은 가상화 컨테이너에 설치
+        => windows에서는 WSL2 설치가 필요하다, 이후 재시작해야 정상적으로 활동할 수 있다.
+           (wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi)
+
+        => Maria DB image(설치까지 되어 있는 환경) 다운로드
+           - docker pull mariadb versiton (생략시 마리아 DB)
+        
+        => Maria DB 실행
+            - docker run --name mariadb -d -p 외부에서 접속할 포트번호:MariaDB 포트 번호 -e MYSQL_ROOR_PASSWORD=루트비밀번호 컨테이너 이름
+            -> docker run --name mariadb -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=8236 mariadb
+            -> 마지막 컨테이너 이름은 알기 쉽게 쓰고자 하는 이미지 파일과 동일하게
+
+        => 실행확인
+            - docker ps
+
+        => 모든 컨테이너 확인
+            - docker -ps -a
+        
+        => 컨테이너 중지
+            - docker stop 컨테이너이름
+
+        => 컨테이너 시작
+            - docker start 컨테이너이름
+
+        => 컨테이너 재시작
+            - docker restart 컨테이너이름
+
+        => 컨테이너 삭제
+            - docekr rm 컨테이너이름
+
+        => 실행중인 컨테이너 삭제
+            - docker rm 컨테이너이름 -f
+
+    3) DB접속 도구 설치
+        => DBeaver(Open Source 이고 여러 DB 접속 기능)설치
+        => MySQL workbench와 같은 역할로 여러종류의 DB를 접속할 수 있기 때문에 사용했다.
+        => 금융 분야로 취업을 생각하면 토드나 오렌지 같은 접속 도구를 사용하는 것도 나쁘지 않다.
+
+    4) DB 서버 실행 및 접속 확인
+        => DB 접속 도구에서
+            Host : localhost
+            PORT : 3306(설치할 때 변경시 수정됨).
+            DATAMASE : mysql(기본제공).
+            USERNAME : root(기본제공).
+            PASSWORD : 설치할 때 사용한 비밀번호
+           를 입력하고 연경을 시도한다.
+
+    5) DB에 외부 접속 허용
+
+        1) 권한 설정
+
+            - GRANT all privileges on 사용할 DB 이름 TO '계정'@'접속할IP';
+            
+            - 모든 DB를 사용하게 하고자 하는 경우 *.*로 설정
+            
+            - 모든 곳에서 접속하도록 하고자 할 때는 %를 설정하고 로컬에서만 접속 하도록 할 때는 localhost로 설정한다.
+            
+            - 권한 설정 명령은 설정하고 적용 명령을 수행한다.
+                -  FLUSH privileges;
+
+            - Ex) root 계정을 모든 곳에서 접속하도록 설정
+                - GRANT all privileges on *.* TO 'root'@'%';
+
+        2) 서버 설정( Windows에 DB를 직접 설치 했으면 권한설정만 하면 되므로 생략.)
+
+            => /etc/mysql/mariadb.conf.d/50-server.cnf 파일의 bind-address 부분을 허용할 IP로 변경을 해줘야 하는데 0.0.0.0 이면 모든 곳에서 접속 가능하게 된다.
+            => 실제 서버 설정이라면 Application Server의 IP만 허용한다.
+
+            => docekr는 직접 파일을 수정할 수 없기 때문에 터미널에서 컨테이너의 bash로 접속
+            => docekr exec -it 컨테이너이름 bash 명령으로 접속한 후
+
+                - apt update -> 기존에 설치된 apt 업데이트
+                - apt upgrade -> apt 업데이트
+                - apt install vim -> 업데이트 된 apt 패키지 다운로드(여기선 vim).
+
+            => vim /etc/mysql/mariadb.conf.d/50-server.cnf 명령으로 수정
+            => vim editor를 사용하는 이유는 자원소모 측면에서 매우 가볍기 때문에 inteliJ나 Eclipes는 무거움, VScode는 그나마 가벼운 편
+
+            => 텍스트가 열리면 i를 눌러서 수정모드로 진입한 뒤 수정하고 ESC를 눌러 수정모드를 빠져 나온후 :wq 명령으로 저장하고 나와야 한다.
+            => mariadb 재시작( docekr에서는 mariaDB 컨테이너 재시작에 해당된다.
