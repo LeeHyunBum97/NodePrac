@@ -44,6 +44,16 @@
         => windows에서는 WSL2 설치가 필요하다, 이후 재시작해야 정상적으로 활동할 수 있다.
            (wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi)
 
+
+        => WSL2 윈도우11 에서 설치하는 방법 (https://www.youtube.com/watch?v=28Ei63qtquQ)
+
+           - 명령어 실행기 에서 appwiz.cpl 입력 혹은 제어판에서 프로그램 -> 프로그램 및 기능으로 이동
+           - windows 기능 켜기/끄기 로 이동
+           - Linux용 windows 하위 시스템, 가상머신 플랫폼 체크 후 자동 재부팅
+           - 마이크로스프 앱스토어에서 우분투 설치 (LTS추천) <파워쉘에서 설치가능>
+           - 파워쉘에서 wsl --update 입력
+           - wsl --status 명령어로 현재 실행중인 wsl 확인.(버전 2)
+
         => Maria DB image(설치까지 되어 있는 환경) 다운로드
            - docker pull mariadb versiton (생략시 마리아 DB)
         
@@ -122,6 +132,7 @@
         => mariadb 재시작( docekr에서는 mariaDB 컨테이너 재시작에 해당된다.
 
         => bind-address 부분을 0.0.0.0으로 수정하면 모든 곳에서 해당 서버에 접속할 수 있게 된다, 실제 서버에서는 특정 IP만 하도록 설정!
+        => exit 명령으로 exec 명령어 탈출
         => 설정을 적용하기 위해서 docekr restart mariadb로 MariaDB 컨테이너를 재시작한다.
 
         => 마지막으로 windows 는 방화벽을 해제해야 외부에서 PC로 접속할 수 있다.
