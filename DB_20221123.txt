@@ -498,7 +498,7 @@ DDL (Data Definition Language)
     => LOCK의 기본 단위는 테이블
 
 ** 테이블 이외의 개체
-=> VIEW나 PROCEDUER, TRIGGER
+=> VIEW나 PROCEDUER, TRIGGER, INDEX
 
 1. VIEW
     => 자주 사용하는 SELCET 구문을 하나의 테이블의 형태로 사용하기 위한 개체
@@ -606,3 +606,47 @@ DDL (Data Definition Language)
 
             # 프로시져 삭제
             - DROP PROCEDUER myproc;
+    
+    2) TRIGGER
+        => 어떤 사건(INSERT, UPDATE, DELETE)이 발생했을 때 절차적 프로그램이 부분을 자동으로 수행하기 위한 개체
+        => 유효성 검사를 해서 SQL을 실행하지 않도록 하거나 DML 작업을 수행했을 때 로그를 기록하거나 다른 DML 작업을 연쇄적으로 실행하는 등의 작업을 주로 수행한다.
+        => 애플리케이션 개발자 입장에서는 프로그래밍으로 처리하려고 하기 때문에 잘 사용하지 않지만 보안을 위해서 사용하는 것도 나쁘지 않다.        
+
+        => 삽입 트리거
+            - 하나의 테이블에 
+              트리거(블로그 같은 곳에서 회원 가입을 하면 가입한 회원의 데이터를 관리할 수 있는 테이블을 별도로 생성하는 경우가 있다.)
+
+            # 데이터를 삽입할 테이블 
+            - CREATE TABLE EMP01(
+                EMPNO INT PRIMARY KEY,
+                ENAME VARCHAR(10),
+                JOB VARCHAR(30))
+            );
+
+            # CREATE TABLE SAL01(
+                SALNO INT PRIMARY KEY AUTO_INCREMENT,
+                SAL FLOAT(7, 2),
+                EMPNO INT REFERENCES EMP01(EMPNO) ON DELETE CASCADE
+            );
+
+            # 삽입 트리거
+            - DELIMITER //
+              CREATE OR REPLACE TRIGGER TRG_01
+              AFTER INSERT ON EMP01 FOR EACH ROW
+              BEGIN
+                INSERT INTO SAL01(SAL, EMPNO) VALUES(100, NEW.EMPNO);
+              END //
+              DELIMITER;
+
+            #  데이터 삽입후 확인
+            - INSERT INT EMP01 VALUES(1, 'adam', 'singer');
+            
+            - SELECT FROM EMP01;
+
+            # 트리거로 인해서 데이터가 삽입이 되었음
+            - SELCET * FROM SAL01;
+
+            # 트리거 제거
+            - DROP TRIGGER TRG_01;
+
+    3) INDEX -> PPT
