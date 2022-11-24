@@ -1,13 +1,71 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Node-MariaDB</title>
-    <link rel="stylesheet" href="/css/common.css"/>
-</head>
-<body>
-    <h1>Maria DB</h1>
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Node-MariaDB</title>
+        <link rel="stylesheet" href="/css/common.css"/>
+        <script>
+            window.addEventListener('load', (e) => {
+                // 이벤트 적용할 DOM 찾아오기
+                let allbtn = document.getElementById("allbtn");
+
+                // allbtn 클릭이벤트 처리
+                allbtn.addEventListener('click', (e) => {
+                    // ajax로 데이터 가져오기
+                    let request = new XMLHttpRequest();
+
+                    // 요청 생성
+                    request.open('GET', "/item/all");
+
+                    // 요청
+                    request.send('');
+
+                    // 데이터가 전송된 경우 처림
+                    request.addEventListener('load', () => {
+                        // JSON 문자열 출력 TEST alert(request.responseText); 출력하기 위해서 JSON 문자열을 JS 객체로 변환
+                        let data = JSON.parse(request.responseText);
+
+                        // 데이터 가져오기에 성공한 경우
+                        if (data.result == true) {
+                            content.innerHTML = "<div align = 'center' class = 'body'>";
+                            content.innerHTML += "<h2>상품목록<h2/>";
+                            content.innerHTML += "<table border = '1'>";
+                            
+                            content.innerHTML += "<tr class='header'>";
+                            content. innerHTML += "<th align 'center' width = '80'>ID</th>"
+                            content. innerHTML += "<th align 'center' width = '320'>이름</th>"
+                            content. innerHTML += "<th align 'center' width = '100'>가격</th>"
+                            content.innerHTML += "</tr>";
+                            
+
+                            let dataAr = data.list;
+                            for(let item of dataAr){ // 요즘은 for in 문보다 for of를 사용해서 배열을 순회 한다.
+                                content.innerHTML += "<tr class='record'>";
+                                
+                                content.innerHTML += "<td align='center'>" + item.itemid + "</td>"
+                                content.innerHTML += "<td align='center'>" + item.itemname + "</td>"
+                                content.innerHTML += "<td align='center'>" + item.price + "</td>"
+
+                                content.innerHTML += "</tr>";
+                            }
+
+                            content.innerHTML += "</table>";
+                            content.innerHTML += "</div>";
+                        } else {
+                            content.innerHTML = "데이터 가져오기 실패"
+                        }
+                    })
+                })
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Maria DB</h1>
+        <input type="button" value="전체 데이터 가져오기" id="allbtn"/><br/>
+        <!-- 데이터 출력 영역 -->
+        <div id="content"></div>
+        <!-- <a href="#" id="alllink">전체 데이터 가져오기</a><br/> -->
+    </body>
 </html>

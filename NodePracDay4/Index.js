@@ -115,8 +115,29 @@ app.get('/', (req, res) => {
 
 app.get('/item/all', (req, res) => {
     // HTML 출력 : res.sendFile(파일경로) - 서버의 데이터 출력 못함
+    // 서버의 데이터 출력 못함 - ajax 나 fetch api를 이용해야 한다.
+
     // 템플릿 엔진 : res.render(파일경로, 데이터)
+    // 템플릿 엔진에 넘겨주는 데이터는 프로그래밍 언어의 데이터
+
     // JSON 출력 : res.json(데이터)
+    // json 문자열의 형태로 데이터를 제공한다.
+    // FE 에서 데이터를 수신해서 출력하는 구조
+
+    // 2개 이상의 데이터를 조회할 때는 정렬은 필수
+    connection.query("select * from goods order by itemid desc", (err, result, fields) => {
+        if(err){
+            // 에러가 발생한 경우
+            // 에러가 발생했다고 데이터를 전송하지 않으면 안된다.
+            // 404 에러 즉, 클라이언트에서 잘못 요청한 경우를 제외하고는 BE 에서 에러를 보여주면 안된다.
+            res.json({'result':false})
+        }else{
+            // 정상 응답한 경우
+            res.json({'result':true, 'list': result});
+            //res.send(result);
+        }
+        
+    })
 });
 
 // 에러 발생 시 처리하는 부분
