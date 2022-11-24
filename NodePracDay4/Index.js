@@ -140,6 +140,12 @@ app.get('/item/all', (req, res) => {
     })
 });
 
+app.get('item/list', (req, res) => {
+    // 파라미터 읽기
+    const page = req.query.page;
+    console.log(page);
+})
+
 // 에러 발생 시 처리하는 부분
 app.use((err, req, res, next) => {
     console.log(err);

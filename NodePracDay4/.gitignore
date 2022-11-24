@@ -1,3 +1,5 @@
 .env
-DBConnection.json
-log/
+
+/DBConnection.json
+
+/log/
