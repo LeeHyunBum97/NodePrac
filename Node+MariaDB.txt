@@ -55,3 +55,91 @@
             }
         });
         // connection이 출력되면 연결 성공
+
+4. SQL 실행 
+    1) SELECT가 아닌 구문
+        => 결과가 성공과 실패 또는 영향 받은 개수의 형태
+        => 연결객체.query(SQL, [파라미터 배열]);
+        => 파라미터 배열은 SQL을 작성할 때 값의 자리에 직접 값을 작성하지 않고 ?로 설정한 후 나중에 값을 대입할 수 있습니다.
+            - "insert into Table(num, name) values(?, ?)", [1, '강감찬']
+            - 프로그래밍 언어에서 SQL을 작성할 때는 ;을 하지 않는다.
+
+            // 테이블 생성 구문
+            connection.query('create Table family(id int auto_increment primary key, name varchar(20))');
+
+            // 데이터 삽입 구문
+            connection.query('insert into family(name) values(?)', '강감찬');
+            connection.query('insert into family(name) values(?)', '을지문덕');
+            connection.query('insert into family(name) values(?)', '이순신');
+
+    2) SELECT 구문
+        => 조회한 결과(Cursor 또는 하나의 객체나 배열)
+        => SELECT 구문은 콜백함수를 매개변수로 추가하는데 콜백함수의 매개변수가 3개로 첫번째는 에러객체 두번쩨는 검색된 내용인데 JS형태로 제공되고 
+           세번째는 meta data로 검색된 결과에 대한 정보입니다.
+           화면에 출력할거라면 java script 객체를 그대로 이용하면 되고 데이터 형태로 제공하고자 하면 JSON 문자열로 변환하면 된다.
+
+        => app.js 파일에서 접속에 성공했을 때 부분에 데이터를 읽어오는 코드
+
+5. 테이블 1개를 SQL을 이용해서 연동
+    
+    0) 기능 
+        => 테이블의 데이터 전체를 가져오기
+        => 테이블의 데이터 일부분을 가져오기(페이지 단위로 가져오기)
+        => 기본키를 이용해서 데이터 1개 가져오기
+        => 데이터 삽입, 삭제, 갱신
+        => 파일 업로드와 다운로드
+        
+        => 가장 최근에 데이터를 수정한 시간을 기록하고 조회
+            => 서버와 클라이언트 사이의 데이터 교환
+            - 접속할 때 마다 서버의 데이터를 가져와서 출력
+            - 서버의 데이터를 클라이언트에 저장하고 접속할 때마다 서버의 데이터와 클라이언트의 데이터를 비교해서 수정이 발생했을 때만 업데이트
+                -> 서버의 데이터와 클라이언트 데이터를 비교할 수 있어야 된다.
+                -> 가장 쉬운 방법은 양쪽에서 수정한 시간을 기록한 후 클라이언트 수정 시간이 서버의 수정 시간보다 이전이면 업데이트를 수행한다.
+         
+    1) 샘플 데이터 생성
+
+        # 테이블 생성
+        CREATE TABLE goods(
+        itemid int,
+        itemname VARCHAR(100), 
+        price int,
+        description VARCHAR(200), 
+        pictureurl VARCHAR(100),
+        updatedate varchar(20),
+        PRIMARY KEY (itemid)
+        )engine=InnoDB DEFAULT CHARSET=utf8;
+
+        insert into goods values(1, '레몬', 500,'비타민 C가 풍부한 쓴귤', 'lemon.jpg', '2020-08-01');
+        insert into goods values(2, '오렌지', 1500, '비타민 C가 풍부한 당귤', 'orange.jpg', '2020-08-01');
+        insert into goods values(3, '키위', 2000, '비타민 C가 풍부한 다래', 'kiwi.jpg', '2020-08-01');
+        insert into goods values(4, '포도', 1000, '항상화 성분과 당분이 높고 무기물이 많은 과일', 'grape.jpg', '2020-08-01'); 
+        insert into goods values(5, '딸기', 2000, '수분함량이 높은 과일', 'strawberry.jpg', '2020-08-01');
+        insert into goods values(6, '무화과', 300, '칼슘, 섬유질 및 항산화 물질을 많이 함유된 식물', 'fig.jpg', '2020-08-01');
+        insert into goods values(7, '레몬', 500,'비타민 C가 풍부한 쓴귤', 'lemon.jpg', '2020-08-01');
+        insert into goods values(8, '오렌지', 1500, '비타민 C가 풍부한 당귤', 'orange.jpg', '2020-08-01');
+        insert into goods values(9, '키위', 2000, '비타민 C가 풍부한 다래', 'kiwi.jpg', '2020-08-01');
+        insert into goods values(10, '포도', 1000, '항상화 성분과 당분이 높고 무기물이 많은 과일', 'grape.jpg', '2020-08-01'); 
+        insert into goods values(11, '딸기', 2000, '수분함량이 높은 과일', 'strawberry.jpg', '2020-08-01');
+        insert into goods values(12, '무화과', 300, '칼슘, 섬유질 및 항산화 물질을 많이 함유된 식물', 'fig.jpg', '2020-08-01');
+        insert into goods values(13, '레몬', 500,'비타민 C가 풍부한 쓴귤', 'lemon.jpg', '2020-08-01');
+        insert into goods values(14, '오렌지', 1500, '비타민 C가 풍부한 당귤', 'orange.jpg', '2020-08-01');
+        insert into goods values(15, '키위', 2000, '비타민 C가 풍부한 다래', 'kiwi.jpg', '2020-08-01');
+        insert into goods values(16, '포도', 1000, '항상화 성분과 당분이 높고 무기물이 많은 과일', 'grape.jpg', '2020-08-01'); 
+        insert into goods values(17, '딸기', 2000, '수분함량이 높은 과일', 'strawberry.jpg', '2020-08-01');
+        insert into goods values(18, '무화과', 300, '칼슘, 섬유질 및 항산화 물질을 많이 함유된 식물', 'fig.jpg', '2020-08-01');
+        insert into goods values(19, '딸기', 2000, '수분함량이 높은 과일', 'strawberry.jpg', '2020-08-01');
+        insert into goods values(20, '무화과', 300, '칼슘, 섬유질 및 항산화 물질을 많이 함유된 식물', 'fig.jpg', '2020-08-01');
+        insert into goods values(21, '레몬', 500,'비타민 C가 풍부한 쓴귤', 'lemon.jpg', '2020-08-01');
+        insert into goods values(22, '오렌지', 1500, '비타민 C가 풍부한 당귤', 'orange.jpg', '2020-08-01');
+        insert into goods values(23, '키위', 2000, '비타민 C가 풍부한 다래', 'kiwi.jpg', '2020-08-01');
+        insert into goods values(24, '포도', 1000, '항상화 성분과 당분이 높고 무기물이 많은 과일', 'grape.jpg', '2020-08-01'); 
+        insert into goods values(25, '딸기', 2000, '수분함량이 높은 과일', 'strawberry.jpg', '2020-08-01');
+        insert into goods values(26, '무화과', 300, '칼슘, 섬유질 및 항산화 물질을 많이 함유된 식물', 'fig.jpg', '2020-08-01');
+        insert into goods values(27, '레몬', 500,'비타민 C가 풍부한 쓴귤', 'lemon.jpg', '2020-08-01');
+        insert into goods values(28, '오렌지', 1500, '비타민 C가 풍부한 당귤', 'orange.jpg', '2020-08-01');
+        insert into goods values(29, '키위', 2000, '비타민 C가 풍부한 다래', 'kiwi.jpg', '2020-08-01');
+        insert into goods values(30, '포도', 1000, '항상화 성분과 당분이 높고 무기물이 많은 과일', 'grape.jpg', '2020-08-01'); 
+
+        commit;
+        
+        # 
