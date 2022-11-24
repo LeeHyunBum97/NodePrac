@@ -156,7 +156,7 @@ app.get('/item/list', (req, res) => {
     // 시작번호 = (pageno-1)*5
 
     // 파라미터는 무조건 문자열이므로 산술연산이 필요하다면 숫자로 형변환 해야한다.
-    connection.query("select * from item order by itemid desc limit ? , 5", [parseInt((pageno-1))*5],(err, result, fields) => {
+    connection.query("select * from goods order by itemid desc limit ? , 5", [parseInt((pageno-1))*5],(err, result, fields) => {
         if(err){
             console.log(err);
             res.json({"result": false});
