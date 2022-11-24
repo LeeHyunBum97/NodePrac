@@ -52,17 +52,26 @@ app.use(bodyParser.urlencoded({
 let options = {
     host : process.env.HOST,
     port : process.env.MYSQLPORT,
-    user : process.env.USERNAME,
+    user : process.env.MYSQLUSER,
     password : process.env.PASSWORD,
     database : process.env.DATABASE
 }
+/* const dbConnOp = fs.readFileSync('./DBConnection.json');
+const connOp = JSON.parse(dbConnOp);
+let options = {
+    host : connOp.host,
+    port : connOp.mysqlport,
+    user : connOp.username,
+    password : connOp.password,
+    database : connOp.database
+} */
 
 // 세션을 저장하기 위한 MySQL DB 저장소 생성
 const MariaDBStore = require('express-mysql-session')(session);
 
 // 세션 설정
 app.use(session({
-    secret: process.env.COOKIY_SECRET,
+    secret: process.env.COOKIE_SECRET,
     resave : false,
     saveUninitialized : true,
     store : new MariaDBStore(options)
@@ -82,8 +91,33 @@ const upload = multer({
     limits: {fileSize: 10*1024*1024}
 });
 
-// 데이터 베이스 연결
+//정적 파일의 경로를 설정
+app.use('/', express.static('public'));
 
+//파일 다운로드를 위한 모듈
+let util = require('util');
+let mime = require('mime');
+const { json } = require("express");
+
+//데이터베이스 연결
+let connection = mysql.createConnection(options);
+connection.connect((error) => {
+    if(error){
+        console.log(error);
+        throw error;
+    }
+})
+
+// 기본 요청을 처리 -> /
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
+})
+
+app.get('/item/all', (req, res) => {
+    // HTML 출력 : res.sendFile(파일경로) - 서버의 데이터 출력 못함
+    // 템플릿 엔진 : res.render(파일경로, 데이터)
+    // JSON 출력 : res.json(데이터)
+});
 
 // 에러 발생 시 처리하는 부분
 app.use((err, req, res, next) => {

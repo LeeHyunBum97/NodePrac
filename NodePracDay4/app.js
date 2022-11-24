@@ -1,3 +1,4 @@
+// DB연결 TEST
 const mariadb = require('mysql')
 
 let connection = mariadb.createConnection({

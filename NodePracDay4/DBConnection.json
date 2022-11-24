@@ -1,0 +1,7 @@
+{
+    "host" : "127.0.0.1",
+    "mysqlport" : 3306,
+    "username" : "root",
+    "password" : "8236",
+    "database" : "adam"
+}
