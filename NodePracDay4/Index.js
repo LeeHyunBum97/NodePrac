@@ -140,11 +140,31 @@ app.get('/item/all', (req, res) => {
     })
 });
 
-app.get('item/list', (req, res) => {
-    // 파라미터 읽기
-    const page = req.query.page;
-    console.log(page);
-})
+// 데이터 일부분 가져오기 - URL:/item/list , 파라미터는 pageno 1개 인데 없으면 1로 설정
+app.get('/item/list', (req, res) => {
+    // 파라미터 읽어오기
+    let pageno = req.query.pageno;
+    if(pageno == undefined){
+        pageno = 1;
+    }
+    // http://localhost:9000/item/list?pageno=2 브라우저에서 강제로 매개변수 넘겨주는 방식
+    // 넘어오는지 console로 확인
+    console.log(pageno);
+
+    // item 테이블에서 itemid를 가지고 내림차순 정렬해서 페이지 단위로 데이터 가져오기
+    // select * feom item order by itemid desc limit 시작번호, 5
+    // 시작번호 = (pageno-1)*5
+
+    // 파라미터는 무조건 문자열이므로 산술연산이 필요하다면 숫자로 형변환 해야한다.
+    connection.query("select * from item order by itemid desc limit ? , 5", [parseInt((pageno-1))*5],(err, result, fields) => {
+        if(err){
+            console.log(err);
+            res.json({"result": false});
+        }else{
+            res.json({"result":true, "list": result});
+        }
+    });
+});
 
 // 에러 발생 시 처리하는 부분
 app.use((err, req, res, next) => {
