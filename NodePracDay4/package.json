@@ -1,0 +1,14 @@
+{
+  "name": "nodepracday4",
+  "version": "1.0.0",
+  "description": "",
+  "main": "NodeConDB.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mysql": "^2.18.1"
+  }
+}
