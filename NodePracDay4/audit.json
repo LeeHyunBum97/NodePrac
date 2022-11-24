@@ -1,0 +1,16 @@
+{
+    "keepSettings": {
+        "type": 2,
+        "amount": 10
+    },
+    "auditFilename": "audit.json",
+    "hashType": "md5",
+    "extension": "",
+    "files": [
+        {
+            "date": 1669256951149,
+            "name": "C:\\VsCode\\NodePrac\\NodePracDay4\\log\\access-20221124.log",
+            "hash": "d3d8b5f9709924c81531f293314c7d2e"
+        }
+    ]
+}

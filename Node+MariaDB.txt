@@ -80,7 +80,7 @@
 
         => app.js 파일에서 접속에 성공했을 때 부분에 데이터를 읽어오는 코드
 
-5. 테이블 1개를 SQL을 이용해서 연동
+5. 테이블 1개를 SQL을 이용해서 연동 (NodePracDay4-Index.js)
     
     0) 기능 
         => 테이블의 데이터 전체를 가져오기
@@ -96,7 +96,7 @@
                 -> 서버의 데이터와 클라이언트 데이터를 비교할 수 있어야 된다.
                 -> 가장 쉬운 방법은 양쪽에서 수정한 시간을 기록한 후 클라이언트 수정 시간이 서버의 수정 시간보다 이전이면 업데이트를 수행한다.
          
-    1) 샘플 데이터 생성
+    1) 샘플 데이터 생성 (DB 스크립트에서 실행)
 
         # 테이블 생성
         CREATE TABLE goods(
@@ -142,4 +142,25 @@
 
         commit;
         
-        # 
+        # 데이터 확인
+        select * from goods;
+
+    2) 필요한 모듈 설치
+        => express : 웹 서버 모듈
+        => morgan : 로그 기록을 위한 모듈
+        => file-stream-rotator : 로그를 파일에 기록하기 위한 모듈
+        => multer : 파일 업로드 처리를 위한 모듈
+        => mysql : mysql이나 mariadb를 사용하기 위한 모듈
+        => cookie-parser : 쿠키를 사용하기 위한 모듈
+        => express-session : 세션을 사용하기 위한 모듈
+        => express-mysql-session : 세션을 mysql이나 mariadb에 저장하기 위한 모듈
+        => dotenv :.env 파일의 내용을 process.env로 저장해서 사용하기 위한 모듈
+        => compresstion : 서버가 처리한 결과를 압축해서 클라이언트에게 전송하기 위한 모듈
+
+    3) 개발 모드로 설치
+        => npm install --save=dev nodemon
+        => nodemon : 소스코드르르 수정하면 자동으로 재시작할 수 있도록 해주모듈
+        => package.json파일의 Script 부분에 "start":"nodemon.app"을 추가 -> npm start 명령을 사용하면 nodemon app 이라는 명령이 수행되어
+           entry point
+
+    4) 서버의 데이터 업데이트 시간을 기록할 update.txt 파일을 프로젝트에 만든다
