@@ -306,15 +306,19 @@ app.post('/item/insert', upload.single('pictureurl'),
     });
 });
 
-app.post("/item/delete", (req, res) => {
-    // post 방식으로 전송된 데이터 읽기
+//데이터를 삭제하는 함수
+app.post('/item/delete', (req, res) => {
+    //post 방식으로 전송된 데이터 읽기
     let itemid = req.body.itemid;
-    connection.query("delete from goods where itemid=?", [itemid], (err, result, fields) => {
+
+    //itemid를 받아서 goods 테이블에서 삭제하기
+    connection.query("delete from goods where itemid=?",
+     [itemid], (err, results, fields)=>{
         if(err){
             console.log(err);
             res.json({"result":false});
-        } else {
-            // 현재 날짜 및 시간을 update.txt에 기록
+        }else{
+            //현재 날짜 및 시간을 update.txt에 기록
             const writeStream = fs.createWriteStream('./update.txt');
             writeStream.write(getTime());
             writeStream.end();
@@ -323,6 +327,13 @@ app.post("/item/delete", (req, res) => {
     });
 });
 
+// 수정을 get으로 요청했을 때 - 수정 화면으로 이동하게 한다.
+app.get('/item/update', (req, res) => {
+    // public 디렉터리의 update.html을 읽어내서 반환
+    fs.readFile('./public/update.html' , (err, data) => {
+        res.end(data);
+    })
+})
 
 // 에러 발생 시 처리하는 부분
 app.use((err, req, res, next) => {
