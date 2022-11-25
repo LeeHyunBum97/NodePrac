@@ -923,5 +923,42 @@
         => 텍스트는 입력받은 내용을 수정하면 되는데 이전 내용을 화면에 출력한 상태에서 내용을 고치지 않았어도 set이나 value값으로
            수정/출력 되는데 file은 수정
 
-    -> App.js
+    -> update.html
+    => 수정화면을 위한 html파일 생성(이번엔 컴포넌트 처럼 나눠서 생성한다. /public/update.html)
+    <form method="post" id="updateform" 
+        enctype="multipart/form-data">
+        아이템 아이디:<input type="text" name="itemid" id="itemid"/>
+        <br/>
+        아이템 이름:<input type="text" name="itemname" id="itemname"/>
+        <br/>
+        아이템 가격:<input type="text" name="price" id="price"/>
+        <br/>
+        설명:<input type="text" name="description" id="description"/>
+        <br/>
+        새로운 이미지:<input type="file" name="pictureurl" />
+        <br/>
+        이전 이미지<img width="100" height="100" id="picture">
+        <br/>
+        <!-- hidden 은 화면에 출력되지는 않지만 가지고 있어야 하는
+        데이터가 있을 때 사용-->
+        <input type="hidden" name="oldpictureurl" id="oldpictureurl"/>
+        <br />
+        <input type="submit" value="수정" />
+    </form>
+
+    -> Index.js
+    => 수정의 get요청이 오면 처리할 함수 작성
+    app.get('/item/update', (req, res) => {
+        // public 디렉터리의 update.html을 읽어내서 반환
+        fs.readFile('./public/update.html' , (err, data) => {
+            res.end(data);
+        })
+    })
+
+    -> index.html
+    => index.html 에서 수정화면(update.html)으로 이동하기 위한 코드 작성
+    =>상세보기를 출력하는 부분에 데이터 수정 DOM을 추가(삭제를 추가한 부분의 위나 아래에 추가)
+    //수정을 위한 DOM을 추가
+    display += "<tr>" + "<td colspan='2' align='center' width='240'>"+ "<a href='#' id='updatebtn'>데이터 수정</a>" + "</td></tr>";
     
+    =>수정 버튼을 눌렀을 때 처리를 위한 스크립트 코드를 추가
