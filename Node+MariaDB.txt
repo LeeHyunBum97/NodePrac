@@ -763,5 +763,162 @@
             return getDate() + " " + hour + ":"  + minute + ":"  + second
         }
 
+
+        //데이터 삽입을 처리해주는 함수
+        app.post('/item/insert', upload.single('pictureurl'), 
+            (req, res) => {
+            //파라미터 읽어오기
+            const itemname = req.body.itemname;
+            const description = req.body.description;
+            const price = req.body.price;
+
+            //파일 이름 - 업로드하는 파일이 없으면 default.png
+            let pictureurl;
+            if(req.file){
+                pictureurl = req.file.filename
+            }else{
+                pictureurl = 'default.jpg';
+            }
+
+            //가장 큰 itemid 찾기
+            connection.query("select max(itemid) maxid from goods",
+            [], (err, results, fields) => {
+                let itemid;
+                //최대값이 있으면 + 1 하고 없으면 1로 설정
+                if(results.length > 0 ){
+                    itemid = results[0].maxid + 1;
+                }else{
+                    itemid = 1;
+                }
+
+                //데이터 삽입
+                connection.query("insert into goods(" + 
+                    "itemid, itemname, price, description," 
+                    + "pictureurl, updatedate) values(?, ?, ?, ?, ?, ?)",
+                    [itemid, itemname, price, description, pictureurl,
+                    getDate()], (err, results, fields) => {
+                    if(err){
+                        console.log(err);
+                        res.json({"result":false});
+                    }else{
+                        //현재 날짜 및 시간을 update.txt에 기록
+                        const writeStream = fs.createWriteStream('./update.txt');
+                        writeStream.write(getTime());
+                        writeStream.end();
+
+                        res.json({"result":true});
+                    }
+                })
+            });
+        })
+
         => postman 으로 확인 후 뷰 작성
-        
+
+        let insertbtn = document.getElementById("insertbtn");
+                insertbtn.addEventListener('click', (e) => {
+                    // 삽입화면 출력
+                    content.innerHTML = '';
+                    let html = 
+                       `
+                        <div>
+                            <p></p>
+                            <form id = 'insertform' enctype = 'multipart/form-data' method = 'post'>
+                                아이템 이름<input type = 'text' name='itemname' id ='itemname'/></br>
+                                가격<input type = 'text' name='price' id = 'price'/></br>
+                                설명<input type = 'text' name='description' id = 'description'/></br>  
+                                이미지<input type='file' name='pictureurl' id = 'pictureurl'/></br>
+                                <input type='submit' value='삽입'/>
+                            </from>
+                        </div>
+                        `
+                        content.innerHTML = html;
+
+                        // from 안에서 삽입 버튼을 눌렀을 때 처리
+                        let f = document.getElementById("insertbtn");
+                        if(f != undefined){
+                            f.addEventListener('submit', (e) => {
+                                // 기본 이벤트 제거
+                                e.preventDefault(); 
+                                // form 데이터 찾아오기
+                                const formData = new FormData(
+                                    document.getElementById('insertbtn')
+                                );
+
+                                // form 데이터
+                                let request = new XMLHttpRequest();
+                                request.open("POST", "/item/insert", true);
+                                request(formData);
+                                request.addEventListener('load', () => {
+                                    let data = JSON.parse(request.responseText);
+                                    if(data.result){
+                                        document.getElementById("listbtn").click();
+                                    } else {
+                                        alert("삽입실패")
+                                    }
+                                })
+                            });
+                        }
+                });
+
+                ....-> <body>
+                <input type="button" value="데이터 삽입" id ="insertbtn"/> 추가
+    
+    24) 데이터 삭제
+        => 기본키를 매개변수로 받아서 삭제한다.
+        => 삭제는 GET이나 POST 둘 다 가능하다.
+
+        -> App.js
+        => itemid를 받아 삭제하는 것 구현
+
+    app.post("/item/delete", (req, res) => {
+        // post 방식으로 전송된 데이터 읽기
+        let itemid = req.body.itemid;
+        connection.query("delete from goods where itemid=?", [itemid], (err, result, fields) => {
+            if(err){
+                console.log(err);
+                res.json({"result":false});
+            } else {
+                // 현재 날짜 및 시간을 update.txt에 기록
+                const writeStream = fs.createWriteStream('./update.txt');
+                writeStream.write(getTime());
+                writeStream.end();
+                res.json({"result":true});
+            }
+        });
+    });
+    => POSTMAN으로 확인
+
+    -> index.html
+    => 상세보기 출력 부분을 수정해서 삭제를 위한 DOM을 추가
+     // 삭제를 위한 DOM을 추가
+     display += "<tr><td colspan='2' align='center' width='240'> <a href='#' id='deletebtn'>데이터 삭제</a></td></tr>"
+
+    => 삭제 요청을 보낼 스크립트를 상새보기 코드 아래부분에 추가
+    let deletebtn = document.getElementById("deletebtn");
+    if(deletebtn != undefined) {
+        deletebtn.addEventListener('click', (e) => {
+        // form이 없는 경우의 POST 방식 파라미터 만들기
+            let params = 'itemid' + item.itemid;
+
+            let request = new XMLHttpRequest();
+            request.open('POST', '/item/delete');
+                                        
+            // from이 아닌 경우는 form 형식으로 인코딩
+            request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            request.send(params);
+            request.addEventListener('load', () => {
+                let data = JSON.parse(request.responseText)
+                if(data.result){
+                    document.getElementById("listbtn").click();
+                        alert("삭제 성공");
+                } else {
+                    alert("삭제 실패");
+                }
+            });
+        });
+    }
+
+    25) 데이터 수정
+        => 현재 데이터를 수정할 수 있도록 화면에 출력하고 데이터를 입력받아서 수정한다.
+        => 텍스트는 입력받은 내용을 수정하면 되는데 이전 내용을 화면에 출력한 상태에서 내용을 고치지 않았어도 set이나 value값으로
+           수정하면 되는데 file은 수정

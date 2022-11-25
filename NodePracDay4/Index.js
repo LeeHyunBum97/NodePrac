@@ -8,6 +8,9 @@ const session = require("express-session");
 const multer = require("multer");
 const dotenv = require("dotenv");
 
+// 자주쓰는 코드는 함수로 만들어 오기
+// 일단은 fetchAPI 없이 get, post, .. 구현
+
 // 설정파일 내용 가져오기
 dotenv.config();
 
@@ -301,7 +304,24 @@ app.post('/item/insert', upload.single('pictureurl'),
             }
         })
     });
-})
+});
+
+app.post("/item/delete", (req, res) => {
+    // post 방식으로 전송된 데이터 읽기
+    let itemid = req.body.itemid;
+    connection.query("delete from goods where itemid=?", [itemid], (err, result, fields) => {
+        if(err){
+            console.log(err);
+            res.json({"result":false});
+        } else {
+            // 현재 날짜 및 시간을 update.txt에 기록
+            const writeStream = fs.createWriteStream('./update.txt');
+            writeStream.write(getTime());
+            writeStream.end();
+            res.json({"result":true});
+        }
+    });
+});
 
 
 // 에러 발생 시 처리하는 부분
