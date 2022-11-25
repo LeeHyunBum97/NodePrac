@@ -215,6 +215,32 @@
                         </div>
                         `
                         content.innerHTML = html;
+
+                        // from 안에서 삽입 버튼을 눌렀을 때 처리
+                        let f = document.getElementById("insertbtn");
+                        if(f != undefined){
+                            f.addEventListener('submit', (e) => {
+                                // 기본 이벤트 제거
+                                e.preventDefault(); 
+                                // form 데이터 찾아오기
+                                const formData = new FormData(
+                                    document.getElementById('insertbtn')
+                                );
+
+                                // form 데이터
+                                let request = new XMLHttpRequest();
+                                request.open("POST", "/item/insert", true);
+                                request(formData);
+                                request.addEventListener('load', () => {
+                                    let data = JSON.parse(request.responseText);
+                                    if(data.result){
+                                        document.getElementById("listbtn").click();
+                                    } else {
+                                        alert("삽입실패")
+                                    }
+                                })
+                            });
+                        }
                 });
             });
         </script>

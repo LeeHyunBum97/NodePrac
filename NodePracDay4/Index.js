@@ -255,52 +255,54 @@ const getTime = () => {
     return getDate() + " " + hour + ":" + minute + ":" + second
 }
 
-// 데이터 삽입을 처리해주는 함수
-app.post('/item/insert', upload.single('pictureurl'), (req, res) => {
-    // 파라미터 읽어오기
+//데이터 삽입을 처리해주는 함수
+app.post('/item/insert', upload.single('pictureurl'), 
+    (req, res) => {
+    //파라미터 읽어오기
     const itemname = req.body.itemname;
     const description = req.body.description;
     const price = req.body.price;
 
-    // 파일 이름
+    //파일 이름 - 업로드하는 파일이 없으면 default.png
     let pictureurl;
-    if (req.file) {
+    if(req.file){
         pictureurl = req.file.filename
-    } else {
-        pictureurl = 'default.png';
+    }else{
+        pictureurl = 'default.jpg';
     }
 
-    // 가장 큰 itemid 찾기
-    connection.query(
-        "select max(itemid) maxid from goods",
-        (err, result, fields) => {
-            let itemid;
-
-            // 최대값이 있으면 +1 하고 없으면 1로 설정
-            if (result.length > 0) {
-                itemid = result[0].maxid + 1
-            } else {
-                itemid = 1;
-            }
-
-            connection.query(
-                "insert into goods (itemid, itemname, price, description, pictureurl, updatedate) values (?, ?, ?, ?, ?, ?)",
-                [itemid, itemname, price, description, pictureurl], getDate()), (err, result, fields) => {
-                if (err) {
-                    console.log(err);
-                    res.json({"result": false});
-                } else {
-                    res.json({"result": true});
-
-                    // 현재 날짜 및 시간을 update.txt 에 기록
-                    const writeStream = fs.createWriteStream('./update.txt');
-                    writeStream.write(getTime());
-                    writeStream.end();
-                }
-            }
+    //가장 큰 itemid 찾기
+    connection.query("select max(itemid) maxid from goods",
+    [], (err, results, fields) => {
+        let itemid;
+        //최대값이 있으면 + 1 하고 없으면 1로 설정
+        if(results.length > 0 ){
+            itemid = results[0].maxid + 1;
+        }else{
+            itemid = 1;
         }
-    )
-});
+
+        //데이터 삽입
+        connection.query("insert into goods(" + 
+            "itemid, itemname, price, description," 
+            + "pictureurl, updatedate) values(?, ?, ?, ?, ?, ?)",
+            [itemid, itemname, price, description, pictureurl,
+            getDate()], (err, results, fields) => {
+            if(err){
+                console.log(err);
+                res.json({"result":false});
+            }else{
+                //현재 날짜 및 시간을 update.txt에 기록
+                const writeStream = fs.createWriteStream('./update.txt');
+                writeStream.write(getTime());
+                writeStream.end();
+
+                res.json({"result":true});
+            }
+        })
+    });
+})
+
 
 // 에러 발생 시 처리하는 부분
 app.use((err, req, res, next) => {
