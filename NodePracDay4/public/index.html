@@ -173,17 +173,57 @@
                             if(data.result == true){
                                 // 데이터 가져오기
                                 let item = data.item
+
+                                // 출력 내용 생성
+                                let display = "<div align = 'center' class='body'>";
+                                display += "<h2>상세보기</h2>";
+                                display += "<table>";
+                                display += "<tr><td> <a href='/img/" + item.pictureurl + "'>" 
+                                    + "<img src='/img/" + item.pictureurl + "'/></td>";
+
+                                display += "<td align = 'center'><table>";
+                                display += "<tr height='50'><td width='80'>상품명</td>";
+                                display += "<td width='160'>" + item.itemname + "</td>";
+                                display += "<tr height='50'><td width='80'>가격</td>";
+                                display += "<td width='160'>" + item.price + "원</td>";
+                                display += "<tr height='50'><td width='80'>비고</td>";
+                                display += "<td width='160'>" + item.description + "</td><tr>";
+                                
+                                display += "</table></td></tr></table>"
+
+                                // SPA -> single 페이지 구현하는 방식
+                                content.innerHTML = display;
                             }
-                        })
+                        });
                     }
-                })
+                });
+                let insertbtn = document.getElementById("insertbtn");
+                insertbtn.addEventListener('click', (e) => {
+                    // 삽입화면 출력
+                    content.innerHTML = '';
+                    let html = 
+                       `
+                        <div>
+                            <p></p>
+                            <form id = 'insertform' enctype = 'multipart/form-data' method = 'post'>
+                                아이템 이름<input type = 'text' name='itemname' id ='itemname'/></br>
+                                가격<input type = 'text' name='price' id = 'price'/></br>
+                                설명<input type = 'text' name='description' id = 'description'/></br>  
+                                이미지<input type='file' name='pictureurl' id = 'pictureurl'/></br>
+                                <input type='submit' value='삽입'/>
+                            </from>
+                        </div>
+                        `
+                        content.innerHTML = html;
+                });
             });
         </script>
     </head>
     <body>
         <h1>Maria DB</h1>
         <input type="button" value="전체 데이터 가져오기" id="allbtn"/><br/>
-        <input type="button" value="페이지 단위 데이터 가져오기" id="listbtn"/>
+        <input type="button" value="페이지 단위 데이터 가져오기" id="listbtn"/><br/>
+        <input type="button" value="데이터 삽입" id ="insertbtn"/>
         <!-- 데이터 출력 영역 -->
         <div id="content"></div>
         <!-- <a href="#" id="alllink">전체 데이터 가져오기</a><br/> -->

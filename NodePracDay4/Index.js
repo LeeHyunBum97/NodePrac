@@ -140,12 +140,9 @@ app.get('/item/list', (req, res) => {
         pageno = 1;
     }
     // http://localhost:9000/item/list?pageno=2 브라우저에서 강제로 매개변수 넘겨주는 방식 넘어오는지
-    // console로 확인
-    //console.log(pageno);
-
-    // item 테이블에서 itemid를 가지고 내림차순 정렬해서 페이지 단위로 데이터 가져오기 select * feom item order by
-    // itemid desc limit 시작번호, 5 시작번호 = (pageno-1)*5 파라미터는 무조건 문자열이므로 산술연산이 필요하다면
-    // 숫자로 형변환 해야한다. 성공여부
+    // console로 확인 console.log(pageno); item 테이블에서 itemid를 가지고 내림차순 정렬해서 페이지 단위로 데이터
+    // 가져오기 select * feom item order by itemid desc limit 시작번호, 5 시작번호 =
+    // (pageno-1)*5 파라미터는 무조건 문자열이므로 산술연산이 필요하다면 숫자로 형변환 해야한다. 성공여부
     let sucOrFail = true;
     // 성공했을 때 데이터를 저장
     let list;
@@ -189,22 +186,126 @@ app.get('/item/detail/:itemid', (req, res) => {
     let itemid = req.params.itemid;
 
     // itemid를 이용해서 1개의 데이터를 찾아오는 SQL을 실생
-    connection.query("select * from goods where itemid = ?", [itemid], (err, result, fields) => {
-        if(err){
-            console.log(err);
-            res.json({"result" : false});
-        }else{
-            res.json({"result" : true, "item":result[0]});
+    connection.query(
+        "select * from goods where itemid = ?",
+        [itemid],
+        (err, result, fields) => {
+            if (err) {
+                console.log(err);
+                res.json({"result": false});
+            } else {
+                res.json({"result": true, "item": result[0]});
+            }
         }
-    });
+    );
+});
+
+//이미지 다운로드 처리
+app.get('/img/:pictureurl', (req, res) => {
+    let pictureurl = req.params.pictureurl;
+    //이미지 파일의 절대경로를 생성
+    let file = "C:\VsCode\NodePrac\NodePracDay4\public\img/" + pictureurl;
+    console.log(__dirname);
+    //파일 이름을 가지고 타입을 생성
+    let mimetype = mime.lookup(pictureurl);
+    res.setHeader('Content-disposition', 'attachment; filename=' + pictureurl);
+    res.setHeader('Content-type', mimetype);
+    //파일의 내용을 읽어서 res에 전송
+    let filestream = fs.createReadStream(file);
+    filestream.pipe(res);
+});
+
+// 현재 날짜를 문자열로 반환하는 함수 요즘 등장하는 JS 라이브러리 샘플 예제는 특별한 경우가 아니면 fucntion을 사용하지 않는다.
+const getDate = () => {
+    let date = new Date();
+
+    let year = date.getFullYear();
+
+    // 월은 +1을 해야 우리가 사용하는 월이 된다.
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+
+    month = month >= 10
+        ? month
+        : '0' + month;
+    day = day >= 10
+        ? day
+        : '0' + day;
+
+    return year + "-" + month + "-" + day;
+}
+
+// 날짜와 시간을 반환하는 함수
+const getTime = () => {
+    let date = new Date();
+    let hour = date.getHours();
+    let minute = date.getMinutes();
+    let second = date.getSeconds();
+
+    hour = hour >= 10
+        ? hour
+        : '0' + hour;
+    minute = minute >= 10
+        ? minute
+        : '0' + minute;
+    second = second >= 10
+        ? second
+        : '0' + second;
+
+    return getDate() + " " + hour + ":" + minute + ":" + second
+}
+
+// 데이터 삽입을 처리해주는 함수
+app.post('/item/insert', upload.single('pictureurl'), (req, res) => {
+    // 파라미터 읽어오기
+    const itemname = req.body.itemname;
+    const description = req.body.description;
+    const price = req.body.price;
+
+    // 파일 이름
+    let pictureurl;
+    if (req.file) {
+        pictureurl = req.file.filename
+    } else {
+        pictureurl = 'default.png';
+    }
+
+    // 가장 큰 itemid 찾기
+    connection.query(
+        "select max(itemid) maxid from goods",
+        (err, result, fields) => {
+            let itemid;
+
+            // 최대값이 있으면 +1 하고 없으면 1로 설정
+            if (result.length > 0) {
+                itemid = result[0].maxid + 1
+            } else {
+                itemid = 1;
+            }
+
+            connection.query(
+                "insert into goods (itemid, itemname, price, description, pictureurl, updatedate) values (?, ?, ?, ?, ?, ?)",
+                [itemid, itemname, price, description, pictureurl], getDate()), (err, result, fields) => {
+                if (err) {
+                    console.log(err);
+                    res.json({"result": false});
+                } else {
+                    res.json({"result": true});
+
+                    // 현재 날짜 및 시간을 update.txt 에 기록
+                    const writeStream = fs.createWriteStream('./update.txt');
+                    writeStream.write(getTime());
+                    writeStream.end();
+                }
+            }
+        }
+    )
 });
 
 // 에러 발생 시 처리하는 부분
 app.use((err, req, res, next) => {
     console.log(err);
-    res
-        .status(500)
-        .send(err.message);
+    res.status(500).send(err.message);
 });
 
 // 서버 구동
