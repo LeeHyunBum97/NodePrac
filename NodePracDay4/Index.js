@@ -183,6 +183,22 @@ app.get('/item/list', (req, res) => {
 
 });
 
+// 상세보기 처리를 위한 코드
+app.get('/item/detail/:itemid', (req, res) => {
+    // 파라미터 읽기
+    let itemid = req.params.itemid;
+
+    // itemid를 이용해서 1개의 데이터를 찾아오는 SQL을 실생
+    connection.query("select * from goods where itemid = ?", [itemid], (err, result, fields) => {
+        if(err){
+            console.log(err);
+            res.json({"result" : false});
+        }else{
+            res.json({"result" : true, "item":result[0]});
+        }
+    });
+});
+
 // 에러 발생 시 처리하는 부분
 app.use((err, req, res, next) => {
     console.log(err);
