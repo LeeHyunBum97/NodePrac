@@ -32,18 +32,17 @@
                             content.innerHTML = "<div align = 'center' class = 'body'>";
                             content.innerHTML += "<h2>상품목록<h2/>";
                             content.innerHTML += "<table border = '1'>";
-                            
+
                             content.innerHTML += "<tr class='header'>";
-                            content. innerHTML += "<th align 'center' width = '80'>ID</th>"
-                            content. innerHTML += "<th align 'center' width = '320'>이름</th>"
-                            content. innerHTML += "<th align 'center' width = '100'>가격</th>"
+                            content.innerHTML += "<th align 'center' width = '80'>ID</th>"
+                            content.innerHTML += "<th align 'center' width = '320'>이름</th>"
+                            content.innerHTML += "<th align 'center' width = '100'>가격</th>"
                             content.innerHTML += "</tr>";
-                            
 
                             let dataAr = data.list;
-                            for(let item of dataAr){ // 요즘은 for in 문보다 for of를 사용해서 배열을 순회 한다.
+                            for (let item of dataAr) { // 요즘은 for in 문보다 for of를 사용해서 배열을 순회 한다.
                                 content.innerHTML += "<tr class='record'>";
-                                
+
                                 content.innerHTML += "<td align='center'>" + item.itemid + "</td>"
                                 content.innerHTML += "<td align='center'>" + item.itemname + "</td>"
                                 content.innerHTML += "<td align='center'>" + item.price + "</td>"
@@ -58,12 +57,110 @@
                         }
                     })
                 })
+                let listbtn = document.getElementById("listbtn");
+                let pageno = 1;
+                listbtn.addEventListener("click", (e) => {
+                    let request = new XMLHttpRequest();
+                    request.open('GET', '/item/list?pageno=' + pageno);
+                    request.send('');
+                    request.addEventListener("load", () => {
+                        // 출력 영역 초기화
+                        content.innerHTML = '';
+                        // 데이터를 파싱
+                        let data = JSON.parse(request.responseText);
+                        if (data.result === true) {
+                            // 데이터 개수와 목록을 가져온다.
+                            let count = data.count;
+                            let list = data.list;
+
+                            // 출력 내용 만들기
+                            let display = "<div align='center' class='body'>";
+                            display += "<h2>상품목록</h2>";
+                            display += "<table border = '1' id='tbldata'>";
+
+                            display += "<tr><td colspan='3' aligh='right'>";
+                            display += "전체 데이터 개수 : " + count + "개</td> </tr>";
+
+                            // 항목 헤더 출력
+                            display += "<tr class='header'>";
+                            display += "<th width='80'>ID</th>";
+                            display += "<th width='320'>상품명</th>";
+                            display += "<th width='100'>가격</th>";
+                            display += "</tr>";
+
+                            // 데이터 목록 출력
+                            for (item of list) {
+                                display += "<tr class = 'record'>";
+                                display += "<td align = 'center'>" + item.itemid + "</td>";
+                                display += "<td align = 'left'>" + item.itemname + "</td>";
+                                display += "<td align = 'right'>" + item.price + "원 </td>";
+                                display += "</tr>";
+                            }
+
+                            display += "</table></div>";
+
+                            // 더보기 구현 현재 페이지가 마지막 페이지가 아닌 경우만 출력
+                            if ((pageno - 1) * 5 < count) {
+                                display += "<table align='center' width='500' id='tblbtn'>";
+                                display += "<tr><td align='center' colspan='3'>";
+                                display += "<span id='addbtn'><a href='#'>더보기</a></span></td>";
+                                display += "</tr></table>";
+                            }
+                            content.innerHTML = display;
+
+                            let addbtn = document.getElementById("addbtn");
+                            /* addbtn.addEventListener('clink', (e) => { });
+                                NullPointerException 에러 발생할 가능성이 높은 상황이다.
+                                addbtn이 무조건 있는 것이 아니라 조건(페이지 생성 개수 5개 보다 많은 경우)
+                                특히 코딩테스 같은 경우에도 try catch 같은 것이나 예외 방지를 위한 노력을 해야한다.
+                            */
+                            if (addbtn != undefined) {
+                                addbtn.addEventListener('click', (e) => {
+                                    pageno += 1;
+                                    let request = new XMLHttpRequest();
+                                    request.open('GET', 'item/list?pageno=' + pageno);
+                                    request.send('');
+
+                                    // 전체 데이터 개수보다 더 많이 출력하면 더보기 영역을 삭제하도록 함
+                                    if ((pageno) * 5 > data.count) {
+                                        pageno -= 1;
+                                        document
+                                            .getElementById("tblbtn")
+                                            .remove();
+                                    }
+
+                                    // 데이터를 가져오면 출력하도록
+                                    request.addEventListener('load', () => {
+                                        let data = JSON.parse(request.responseText);
+                                        let list = data.list;
+
+                                        // 데이터 테이블 출력
+                                        const table = document.getElementById('tbldata');
+                                        let display = "";
+                                        for (item of list) {
+                                            display += "<tr class = 'record'>";
+                                            display += "<td align = 'center'>" + item.itemid + "</td>";
+                                            display += "<td align = 'left'>" + item.itemname + "</td>";
+                                            display += "<td align = 'right'>" + item.price + "원 </td>";
+                                            display += "</tr>";
+                                        }
+                                        table.innerHTML += display;
+                                    })
+                                });
+                            }
+
+                        } else {
+                            content.innerHTML = '<p> 데이터를 가져오는데 실패 </p>';
+                        }
+                    })
+                });
             });
         </script>
     </head>
     <body>
         <h1>Maria DB</h1>
         <input type="button" value="전체 데이터 가져오기" id="allbtn"/><br/>
+        <input type="button" value="페이지 단위 데이터 가져오기" id="listbtn"/>
         <!-- 데이터 출력 영역 -->
         <div id="content"></div>
         <!-- <a href="#" id="alllink">전체 데이터 가져오기</a><br/> -->

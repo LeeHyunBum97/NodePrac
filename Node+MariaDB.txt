@@ -324,6 +324,7 @@
     15) 프로젝트 내의 log 디렉토리 안의 로그 파일을 확인
 
     16) 데이터 전체 가져오기 -> URL: item/all
+        - 
 
     17) Index.js 파일에 추가
 
@@ -453,4 +454,9 @@
 
             =>URL을 결정 - /item/list
 
+    => Node.js에서 SQL을 이용해서 Select 구문을 실행했을 때의 결과는 무조건 배열이다.
+    => Select 구문을 수행하게 되면 몇개의 행이 나올지 몇개의 열이 나올지 알 수 없다
+        -> [{컬럼이름: 값, 컬럼이름 : 값, ...}, {..}, {..}, ...] 과 같은 구조를 만들어 두고 채워 나간다.
+        -> select count(*) from goods; 를 불러온 connection.query 문의 데이터 값은 [{count(*): 30}]과 같이 담겨있게 된다.
+        -> result[0].count(*)와 같이 읽어올 수 있지만 select count(*) cnt from goods; 와 같이 별명을 붙여서 읽어내는 것을 권장
     
