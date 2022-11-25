@@ -96,7 +96,6 @@ app.use('/', express.static('public'));
 //파일 다운로드를 위한 모듈
 let util = require('util');
 let mime = require('mime');
-const {json} = require("express");
 
 //데이터베이스 연결
 let connection = mysql.createConnection(options);
@@ -207,7 +206,7 @@ app.get('/item/detail/:itemid', (req, res) => {
 app.get('/img/:pictureurl', (req, res) => {
     let pictureurl = req.params.pictureurl;
     //이미지 파일의 절대경로를 생성
-    let file = "C:\VsCode\NodePrac\NodePracDay4\public\img/" + pictureurl;
+    let file = "C:\VSC\KakaoCloud\NodePrac\NodePracDay4\public\img/" + pictureurl;
     console.log(__dirname);
     //파일 이름을 가지고 타입을 생성
     let mimetype = mime.lookup(pictureurl);
@@ -266,7 +265,7 @@ app.post('/item/insert', upload.single('pictureurl'),
     const description = req.body.description;
     const price = req.body.price;
 
-    //파일 이름 - 업로드하는 파일이 없으면 default.png
+    //파일 이름 - 업로드하는 파일이 없으면 default.jpg
     let pictureurl;
     if(req.file){
         pictureurl = req.file.filename

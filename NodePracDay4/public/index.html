@@ -124,7 +124,7 @@
                                     request.send('');
 
                                     // 전체 데이터 개수보다 더 많이 출력하면 더보기 영역을 삭제하도록 함
-                                    if ((pageno) * 5 > data.count) {
+                                    if ((pageno) * 5 >= data.count) {
                                         pageno -= 1;
                                         document
                                             .getElementById("tblbtn")
@@ -269,18 +269,19 @@
                     content.innerHTML = html;
 
                     // from 안에서 삽입 버튼을 눌렀을 때 처리
-                    let f = document.getElementById("insertbtn");
+                    let f = document.getElementById("insertform");
                     if (f != undefined) {
                         f.addEventListener('submit', (e) => {
                             // 기본 이벤트 제거
                             e.preventDefault();
                             // form 데이터 찾아오기
-                            const formData = new FormData(document.getElementById('insertbtn'));
+                            const formData = new FormData(document.getElementById('insertform'));
+                            
 
                             // form 데이터
                             let request = new XMLHttpRequest();
                             request.open("POST", "/item/insert", true);
-                            request(formData);
+                            request.send(formData);
                             request.addEventListener('load', () => {
                                 let data = JSON.parse(request.responseText);
                                 if (data.result) {
