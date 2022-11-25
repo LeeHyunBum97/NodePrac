@@ -309,7 +309,7 @@
             text-decoration: none;
         }
 
-    12)App.js 파일에 기본 요청을 처리하는 코드를 추가
+    12)Index.js 파일에 기본 요청을 처리하는 코드를 추가
 
         //기본 요청을 처리
         app.get('/', (req, res) => {
