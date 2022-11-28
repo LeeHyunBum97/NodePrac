@@ -261,7 +261,7 @@ Node_ORM
 
         });
 
-    - 삭제
+    - 데이터를 삭제하는 코드
         app.post('/item/delete', async(req, res) => {
             //post 방식으로 전송된 데이터 읽기
             let itemid = req.body.itemid;
@@ -287,4 +287,40 @@ Node_ORM
         => 검색을 하는 경우에는 검색 결과가 반환되지만 삽입, 삭제, 갱신의 경우는 각 작업이 이뤄진 데이터가 반환된다.
 
     * 콜백함수 앞에 async 비동기 함수에 await로 처리하면 순차적으로 함수들을 처리할 수 있다.
+
+5. 2개 테이블 연결(새 프로젝트)
+
+    1) 패키지 설치
+        npm install express sequelize sequelize-cli mysql2
+        npm install --dev install
     
+    2) sequelize 초기화
+        npx sequelize init
+        4 개 디렉토리(config, migrations, models, seeders) 생성 확인
+        
+    3) config 디렉터리 config.json 파일에 DB 정보 설정
+        {
+            "development": {
+                "username": "root",
+                "password": "8236",
+                "database": "adam",
+                "host": "127.0.0.1",
+                "dialect": "mysql"
+            },
+            "test": {
+                "username": "root",
+                "password": "8236",
+                "database": "adam",
+                "host": "127.0.0.1",
+                "dialect": "mysql"
+            },
+            "production": {
+                "username": "root",
+                "password": "8236",
+                "database": "adam",
+                "host": "127.0.0.1",
+                "dialect": "mysql"
+            }
+        }
+    
+    4) models 디렉토리의 index.js 수정

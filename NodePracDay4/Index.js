@@ -476,7 +476,7 @@ app.get('/item/update', (req, res) => {
 
 
 // 수정을 처리하는 코드 1
-app.post('/item/update', upload.single('pictureurl'), (req, res) => {
+/* app.post('/item/update', upload.single('pictureurl'), (req, res) => {
     //파라미터 가져오기
     const itemid = req.body.itemid;
     const itemname = req.body.itemname;
@@ -521,10 +521,10 @@ app.post('/item/update', upload.single('pictureurl'), (req, res) => {
         }
     )
 
-});
+}); */
 
 // 수정을 처리하는 코드 1
-/* app.post('/item/update', upload.single('pictureurl'), async(req, res) => {
+app.post('/item/update', upload.single('pictureurl'), async(req, res) => {
     //파라미터 가져오기
     const itemid = req.body.itemid;
     const itemname = req.body.itemname;
@@ -556,7 +556,7 @@ app.post('/item/update', upload.single('pictureurl'), (req, res) => {
         console.log({"result":false})
     }
 
-}); */
+});
 
 app.get('/item/updatedate', (req, res) => {
     fs.readFile('./update.txt', (error, data) => {

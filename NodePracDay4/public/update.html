@@ -1,15 +1,21 @@
-<!-- 파일을 다루는 form 은 enctype="multipart/form-data" 을 설정해야 파일을 여러번 나눠서 보낸다고 명시해주는 것.
-     이렇게 하지 않으면 나눠져 보내지는 파일을 서버에서 앞부분 밖에 읽지 못하게 된다.
-     이를 명시하는 것은 파일의 시작과 끝을 명시하게 되는 것이고 나중에 모으고 있다가 나눠진 파일(패킷)의 순서를 맞춘다(흐름제어)  -->
-<form method="POST" id="updateform" enctype="multipart/form-data">
-    아이템 아이디: <input type="text" name="itemid" id="itemid"/></br>
-    아이템 이름: <input type="text" name="itemname" id="itemname"/></br>
-    아이템 가격: <input type="text" name="price" id="price"/></form></br>
-    아이템 설명: <input type="text" name="description" id="description"/></br>
-    새로운 이미지: <input type="file" name="pictureurl"/></br>
-    이전 이미지: <img width="100" height="100" id ='picture'/></br>
-
-    <!-- hidden은 화면에 출력되지 않지만 가지고 있어야 하는 데이터가 있을 때 사용 -->
-    <input type = 'hidden' name="oldpictureurl" id="oldpictureurl"/></br>
-    <input type="submit" value="수정"/> 
+<!-- 파일을 다루는 form 은 enctype="multipart/form-data" 을 설정해야 파일을 여러번 나눠서 보낸다고 명시해주는
+것. 이렇게 하지 않으면 나눠져 보내지는 파일을 서버에서 앞부분 밖에 읽지 못하게 된다. 이를 명시하는 것은 파일의 시작과 끝을 명시하게 되는
+것이고 나중에 모으고 있다가 나눠진 파일(패킷)의 순서를 맞춘다(흐름제어) -->
+<form method="post" id="updateform" enctype="multipart/form-data">
+    아이템 아이디:<input type="text" name="itemid" id="itemid"/>
+    <br/>
+    아이템 이름:<input type="text" name="itemname" id="itemname"/>
+    <br/>
+    아이템 가격:<input type="text" name="price" id="price"/>
+    <br/>
+    설명:<input type="text" name="description" id="description"/>
+    <br/>
+    새로운 이미지:<input type="file" name="pictureurl"/>
+    <br/>
+    이전 이미지<img width="100" height="100" id="picture">
+        <br/>
+        <!-- hidden 은 화면에 출력되지는 않지만 가지고 있어야 하는 데이터가 있을 때 사용-->
+        <input type="hidden" name="oldpictureurl" id="oldpictureurl"/>
+        <br/>
+        <input type="submit" value="수정"/>
 </form>
