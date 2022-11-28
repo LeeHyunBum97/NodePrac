@@ -1,7 +1,7 @@
 //모듈 import
 const Sequelize = require('sequelize');
 //모델 가져오기
-const Good = require('./good');
+const Good = require('./product');
 
 //환경 설정
 const env = process.env.NODE_ENV || 'development';

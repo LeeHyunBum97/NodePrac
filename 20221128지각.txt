@@ -1,0 +1,290 @@
+SPA(Single Page Application) 구현 방법 
+    하나의 HTML 파일에 스크립트를 이용해서 여러 개의 콘텐츠를 출력하는 방식 - 비추천
+    각 콘텐츠에 해당하는 별도의 html파일을 만들고 이를 불러들이는 방식
+    대부분의 SPA 프레임워크(React, Vue 등)들이 이 방식으로 구현(js 파일의 형태로 구현)
+    이렇게 만들어진 콘텐츠에 해당하는 파일들을 컴포넌트라고 함.
+    하나의 HTML에서 다른 HTML 파일을 가져오는 것은 ajax로 가능
+    <a href="파일 경로"> <a href="서버에 요청하는 경로">
+    클라이언트가 서버에 요청 -> 서버 -> 클라이언트에게 응답
+
+💡 클라이언트가 어떤 행위를 할 떄 서버는 알고 있어야 한다.
+ 
+
+12. 서버의 데이터가 마지막으로 업데이트 된 시간을 전송하는 처리를 App.js 파일에 작성
+더보기
+ 
+
+프로그래밍 언어에서 관계형 데이터 베이스를 사용하는 방법
+
+1. 데이터 베이스 드라이버만 이용해서 작업
+    소스 코드 안에 SQL을 삽입해서 작업하는 방식
+    소스 코드 안에 SQL이 삽입되어 있어 유지보수가 어려움
+
+2. SQL Mapper 방식
+소스 코드와 SQL을 분리해서 작성하는 방식
+사용이 쉽기 때문에 SI와 같은 여러 명이 공동으로 작업하는 프로젝트에서 많이 사용
+성능은 떨어짐
+
+3. ORM
+관계형 데이터베이스의 테이블을 클래스와 그리고 테이블의 행을 인스턴스와 매핑해서 사용하는 방식으로 SQL을 사용할 수도 있고 사용하지 않을 수도 있음
+일반적으로 성능이 SQL Mapper 보다 좋기 때문에 솔루션 개발에 많이 이용함
+하지만 학습이 어려워 SI 업무에는 적합하지 않음
+JAVA의 JPA(Hibernate로 구현하는 경우가 많음) 나 node의 sequelize 그리고 Python의 Django 등이 대표적인 프레임워크임
+대부분의 경우는 데이터베이스를 변경할 때 설정만 변경하면 됨
+ 
+
+Node_ORM
+
+1. ORM(Object Relational Mapping)
+    객체 지향 패러다임을 관계형 데이터베이스에 적용하는 기술
+    관계형 데이터베이스의 TABLE은 객체 지향 프로그래밍의 클래스와 유사한데 TABLE에서는 여러개의 컬럼을 만들지만 CLASS에서는 속성을 만들어서 저장하는 것이 유사
+    이런 이유 때문에 Instance 와 Row가 유사
+    이를 적절히 이용해서 Instance를 가지고 관계형 데이터베이스 작업을 할 수 있도록 만든 프레임워크가 ORM
+    Instance를 가지고 작업을 수행하면 프레임워크가 SQL로 변경을 해서 데이터베이스에 작업을 수행하는 형태로 동작
+    Node에서는 sequelize 모듈이 이러한 작업을 수행할 수 있음
+
+2. Sequlize를 이용한 하나의 테이블 연동
+    1) 패키지 설치
+        npm install sequelize, sequelize-cli, mysql2
+    2) sequelize 초기화
+        npx sequelize init 명령을 수행
+        초기화를 수행하면 config, migration, models, seeders 디렉토리가 생성됨
+        config : 데이터베이스 접속 정보 설정
+        models : 각 테이블과 매핑 되는 클래스를 설정
+        migration : 데이터베이스 스키마(구조, 테이블)가 변경되는 경우를 위한 설정
+        seeders : 테스트 데이터 사용을 위한 설정
+        
+
+    3. 데이터베이스 접속 설정
+        1) config 디렉토리의 config.json 파일을 수정
+            {
+            "development": {
+                "username": "root",
+                "password": "qlxkals",
+                "database": "itoriginal",
+                "host": "127.0.0.1",
+                "dialect": "mysql"
+            },
+            "test": {
+                "username": "root",
+                "password": "qlxkals",
+                "database": "itoriginal",
+                "host": "127.0.0.1",
+                "dialect": "mysql"
+            },
+            "production": {
+                "username": "root",
+                "password": "qlxkals",
+                "database": "itoriginal",
+                "host": "127.0.0.1",
+                "dialect": "mysql"
+            }
+            }
+    2) models 디렉토리의 index.js 파일을 수정
+        // 모듈 import
+        const Sequelize = require('sequelize');
+        // 환경 설정
+        const env = process.env.NODE_ENV || 'development';
+        // 환경 설정 내용 가져오기
+        const config = require('../config/config.json')[env];
+        // 내보낼 객체 생성
+        const db = {};
+        // ORM 설정
+        const sequelize = new Sequelize(
+        config.database, config.username, config.password, config);
+        db.sequelize = sequelize;
+        module.exports = db;
+    3) App.js 파일에 데이터베이스 연결 코드를 작성하고 실행
+        ...
+        // sequelize를 이용한 데이터베이스 연결
+        // require를 할 때 디렉토리 이름을 기재하면
+        // 디렉토리 안에 index.js의 내용을 import
+        const {sequelize} = require('./models')
+        sequelize.sync({force:false})
+        .then(()=>{
+            console.log("데이터베이스 연결 성공")
+        })
+        .catch((err)=>{
+            console.log("데이터베이스 연결 실패")
+        });
+
+        //기본 요청을 처리
+        app.get ...
+
+    4) 하나의 테이블을 연동
+        테이블을 먼저 만들고 연결 시켜도 되고 모델을 만들고 처음 실행을 하면 테이블이 존재하지 않으면 테이블이 생성됨
+        테이블이 이미 존재하면 존재하는 테이블과 연결함
+        대부분의 실무 환경에서는 테이블을 먼저 만들고 모델을 만들고 학습을 할 때는 모델을 가지고 테이블을 생성함
+ 
+4. 연동할 테이블을 생성
+
+    1) 테이블 과 연결할 모델 생성
+        Sequelize.Model을 상속받은 클래스를 생성
+
+        2개의 메서드 : 오버라이딩
+        static init 메서드 : 현재 테이블에 대한 설정
+        static associate 메서드 : 다른 테이블과의 관계를 위한 설정
+        static init 메서드
+        첫번째 인수 : 컬럼에 대한 설정
+        자료형 매핑
+        VARCHAR ↔ STRING
+        CHAR ↔ CHAR
+        TEXT ↔ TEXT
+        TYNYINT(1) ↔ BOOLEAN
+        INT,INTERGER ↔ INTEGER
+        FLOAT ↔ FLOAT
+        DOUBLE ↔ DOBLE
+        DATETIME ↔ DATE
+        DATE ↔ DATEONLY
+        TIME ↔ TIME
+        BLOB ↔ BLOB
+        JSON ↔ JSON
+        제약조건
+        allow Null
+        unique
+        defaultValue
+        validate
+        두번째 인수 : 테이블에 대한 설정
+        ▶ timestamps : true로 설정하면 createdAt 과 updatedAt 컬럼이 자동으로 생성되서 데이터가 생성된 날짜와 수정된 날짜를 자동으로 삽입
+        ▶ underscored : 시퀄라이즈는 이름을 기본적으로 Camel Case로 만드는데 이를 Snake Case로 변경하고자 할 때 사용
+        ▶ modelName : 노드 프로젝트에서 사용할 모델 이름
+        ▶ tableName : 데이터베이스의 테이블 이름
+        ▶ paranoid : 데이터를 삭제할 때 삭제하지 않고 deletedAt 이라는 컬럼을 생성해서 이 컬럼의 값을 true로 만들고 조회하기 위한 옵션
+        ▶ charset 과 collate : 캐릭터 셋으로 한글을 사용하고자 할 때는 utf8이나 utf8_general로 설정하고 이모티콘까지 사용하고자 하면 utf8mb4와 utfmb4_general_ci를 설정
+        static associate 메서드
+        자신의모델이름.hasMany 나 belongsTo 를 호출하는데 hasMany는 참조되는 경우(부모 테이블로 외래키의 참조 대상)이고 belogsTo 는 참조하는 경우(외래키로 소유한 경우)에 호출
+        매개 변수로는 상재방모델이름, {foreignKey:'외래키이름', targetKey:'참조하는 속성'} 를 설정하면 됨
+        삽입 : create
+        조회 : findOne, findAll
+        수정 : update
+        삭제 : delete
+
+    2)연동할 테이블을 위해서 기존 테이블을 삭제
+        drop table goods;
+    4) modes 디렉토리에 goods 테이블과 연동할 모델을 생성 - good.js
+
+    
+    5) models 디렉토리의 index.js 파일에 생성한 모델을 사용할 수 있도록 추가 설정
+
+    
+    6) App.js 파일에 Good을 사용하기 위한 설정을 추가
+
+        const{Good} = require('./models');
+
+    7) Index.js에 CRUD 구현
+
+    - 데이터 삽입
+        // 데이터 삽입을 처리해주는 함수2(async-await)
+        app.post('/item/insert', upload.single('pictureurl'), 
+            // async 추가
+            async(req, res) => {
+            //파라미터 읽어오기
+            const itemname = req.body.itemname;
+            const description = req.body.description;
+            const price = req.body.price;
+
+            //파일 이름 - 업로드하는 파일이 없으면 default.jpg
+            let pictureurl;
+            if(req.file){
+                pictureurl = req.file.filename
+            }else{
+                pictureurl = 'default.jpg';
+            }
+
+            //가장 큰 itemid 찾기
+            let itemid = 1;
+            try{
+                let x = await Good.max('itemid');
+                itemid = x + 1;
+            }catch(err){
+                console.log(err);
+            }
+
+            // 데이터 삽입
+            Good.create({
+                itemid : itemid,
+                itemname : itemname,
+                price : price,
+                description : description,
+                pictureurl : pictureurl,
+                updatedate : getDate()
+            });
+
+            //현재 날짜 및 시간을 update.txt에 기록
+            const writeStream = fs.createWriteStream('./update.txt');
+            writeStream.write(getTime());
+            writeStream.end();
+
+            res.json({"result":true});
+        });
+    
+    - 데이터 전체 개수 가져오기
+        // 전체 데이터 개수 가져오기 2
+        app.get('/item/all', async(req, res) => {
+            // HTML 출력 : res.sendFile(파일경로) - 서버의 데이터 출력 못함 서버의 데이터 출력 못함 - ajax 나 fetch
+            // api를 이용해야 한다. 템플릿 엔진 : res.render(파일경로, 데이터) 템플릿 엔진에 넘겨주는 데이터는 프로그래밍 언어의 데이터
+            // JSON 출력 : res.json(데이터) json 문자열의 형태로 데이터를 제공한다. FE 에서 데이터를 수신해서 출력하는 구조 2개
+            // 이상의 데이터를 조회할 때는 정렬은 필수
+            try {
+                let list = await Good.findAll();
+                res.json({"result":true, "list":list});
+            }catch(err){
+                console.log(err)
+                res.json({"result":false})
+            }
+        });
+
+    - 데이터 페이지 단위로 가져오기
+        // 데이터 일부분 가져오기2 - URL:/item/list , 파라미터는 pageno 1개 인데 없으면 1로 설정
+        app.get('/item/list', async (req, res) => {
+            // 파라미터 읽어오기
+            let pageno = req.query.pageno;
+
+            if (pageno == undefined) {
+                pageno = 1;
+            }
+
+            try {
+                // 테이블의 전체 데이터 개수를 가져오기
+                let cnt = await Good.count();
+
+                // 페이지 단위로 데이터 목록 가져오기
+                let list = await Good.findAll({
+                    offset: (parseInt(pageno) - 1) * 5,
+                    limit: 5
+                });
+                res.json({"result": true});
+            } catch (err) {
+                console.log(err);
+                res.json({"result": false});
+            }
+
+        });
+
+    - 삭제
+        app.post('/item/delete', async(req, res) => {
+            //post 방식으로 전송된 데이터 읽기
+            let itemid = req.body.itemid;
+
+            try{
+                // 실제로 삭제하는 것이 아님 DB에 가면 존재하는데 DeletedAt에 컬럼에만 표시해두어
+                // find 할 때 찾아오지 않는 것.
+                // await 이하의 내용을 let deletedItem과 같은 변수에 담으면 Sequelize 삽/삭/갱은 작업이 이뤄진 데이터를 반환하기 때문에
+                // 무엇이 바꼈는지 알 수 있다.
+                await Good.destroy({ 
+                    where: {
+                        itemid: itemid
+                    }
+                })
+            }catch(err){
+                console.log(err);
+                console.log({"result":false})
+            }
+        });
+
+
+    8) 각 메서드의 반환
+        => 검색을 하는 경우에는 검색 결과가 반환되지만 삽입, 삭제, 갱신의 경우는 각 작업이 이뤄진 데이터가 반환된다.
+
+    * 콜백함수 앞에 async 비동기 함수에 await로 처리하면 순차적으로 함수들을 처리할 수 있다.
+    

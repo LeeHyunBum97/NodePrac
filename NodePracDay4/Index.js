@@ -8,10 +8,7 @@ const session = require("express-session");
 const multer = require("multer");
 const dotenv = require("dotenv");
 
-// 자주쓰는 코드는 함수로 만들어 오기
-// 일단은 fetchAPI 없이 get, post, .. 구현
-
-// 설정파일 내용 가져오기
+// 자주쓰는 코드는 함수로 만들어 오기 일단은 fetchAPI 없이 get, post, .. 구현 설정파일 내용 가져오기
 dotenv.config();
 
 // 서버 설정
@@ -106,27 +103,27 @@ connection.connect((error) => {
     }
 })
 
-// sequelize를 이용한 데이터베이스 연결
-//require 할 때 디렉터리 이름을 기재하면 
-// 디렉터리 안의 index.js의 내용을 impor
+// sequelize를 이용한 데이터베이스 연결 require 할 때 디렉터리 이름을 기재하면 디렉터리 안의 index.js의 내용을
+// impor
 const {sequelize} = require('./models');
 const {Good} = require('./models')
 
-sequelize.sync({force:false})
-.then(() => {
-    console.log("데이터 베이스 연결 성공")
-})
-.catch((err) => {
-    console.log("데이터베이스 연결 실패")
-});
-
+sequelize
+    .sync({force: false})
+    .then(() => {
+        console.log("데이터 베이스 연결 성공")
+    })
+    .catch((err) => {
+        console.log("데이터베이스 연결 실패")
+    });
 
 // 기본 요청을 처리 -> /
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 })
 
-app.get('/item/all', (req, res) => {
+// 전체 데이터 가져오기 1
+/* app.get('/item/all', (req, res) => {
     // HTML 출력 : res.sendFile(파일경로) - 서버의 데이터 출력 못함 서버의 데이터 출력 못함 - ajax 나 fetch
     // api를 이용해야 한다. 템플릿 엔진 : res.render(파일경로, 데이터) 템플릿 엔진에 넘겨주는 데이터는 프로그래밍 언어의 데이터
     // JSON 출력 : res.json(데이터) json 문자열의 형태로 데이터를 제공한다. FE 에서 데이터를 수신해서 출력하는 구조 2개
@@ -146,10 +143,25 @@ app.get('/item/all', (req, res) => {
 
         }
     )
+}); */
+
+// 전체 데이터 가져오기 2
+app.get('/item/all', async (req, res) => {
+    // HTML 출력 : res.sendFile(파일경로) - 서버의 데이터 출력 못함 서버의 데이터 출력 못함 - ajax 나 fetch
+    // api를 이용해야 한다. 템플릿 엔진 : res.render(파일경로, 데이터) 템플릿 엔진에 넘겨주는 데이터는 프로그래밍 언어의 데이터
+    // JSON 출력 : res.json(데이터) json 문자열의 형태로 데이터를 제공한다. FE 에서 데이터를 수신해서 출력하는 구조 2개
+    // 이상의 데이터를 조회할 때는 정렬은 필수
+    try {
+        let list = await Good.findAll();
+        res.json({"result": true, "list": list});
+    } catch (err) {
+        console.log(err)
+        res.json({"result": false})
+    }
 });
 
 // 데이터 일부분 가져오기 - URL:/item/list , 파라미터는 pageno 1개 인데 없으면 1로 설정
-app.get('/item/list', (req, res) => {
+/* app.get('/item/list', (req, res) => {
     // 파라미터 읽어오기
     let pageno = req.query.pageno;
 
@@ -195,10 +207,36 @@ app.get('/item/list', (req, res) => {
         }
     });
 
+}); */
+
+// 데이터 일부분 가져오기2(페이지 단위) - URL:/item/list , 파라미터는 pageno 1개 인데 없으면 1로 설정
+app.get('/item/list', async (req, res) => {
+    // 파라미터 읽어오기
+    let pageno = req.query.pageno;
+
+    if (pageno == undefined) {
+        pageno = 1;
+    }
+
+    try {
+        // 테이블의 전체 데이터 개수를 가져오기
+        let cnt = await Good.count();
+
+        // 페이지 단위로 데이터 목록 가져오기
+        let list = await Good.findAll({
+            offset: (parseInt(pageno) - 1) * 5,
+            limit: 5
+        });
+        res.json({"result": true, "list":list});
+    } catch (err) {
+        console.log(err);
+        res.json({"result": false});
+    }
+
 });
 
 // 상세보기 처리를 위한 코드
-app.get('/item/detail/:itemid', (req, res) => {
+/* app.get('/item/detail/:itemid', (req, res) => {
     // 파라미터 읽기
     let itemid = req.params.itemid;
 
@@ -215,13 +253,32 @@ app.get('/item/detail/:itemid', (req, res) => {
             }
         }
     );
+}); */
+
+// 상세보기 처리를 위한 코드 2
+app.get('/item/detail/:itemid', async(req, res) => {
+    // 파라미터 읽기
+    let itemid = req.params.itemid;
+
+    try{
+        let item = await Good.findOne({
+            where:{
+                itemid:itemid
+            }
+        });
+        res.json({"result":true, "item":item})
+    }catch(err){
+        console.log(err);
+        console.log({"result":false});
+    }
 });
 
 //이미지 다운로드 처리
 app.get('/img/:pictureurl', (req, res) => {
     let pictureurl = req.params.pictureurl;
     //이미지 파일의 절대경로를 생성
-    let file = "C:\VSC\KakaoCloud\NodePrac\NodePracDay4\public\img/" + pictureurl;
+    let file = "C:\VSC\KakaoCloud\NodePrac\NodePracDay4\public\img/" +
+            pictureurl;
     console.log(__dirname);
     //파일 이름을 가지고 타입을 생성
     let mimetype = mime.lookup(pictureurl);
@@ -272,8 +329,8 @@ const getTime = () => {
     return getDate() + " " + hour + ":" + minute + ":" + second
 }
 
-//데이터 삽입을 처리해주는 함수
-app.post('/item/insert', upload.single('pictureurl'), 
+// 데이터 삽입을 처리해주는 함수
+/* app.post('/item/insert', upload.single('pictureurl'),
     (req, res) => {
     //파라미터 읽어오기
     const itemname = req.body.itemname;
@@ -300,8 +357,8 @@ app.post('/item/insert', upload.single('pictureurl'),
         }
 
         //데이터 삽입
-        connection.query("insert into goods(" + 
-            "itemid, itemname, price, description," 
+        connection.query("insert into goods(" +
+            "itemid, itemname, price, description,"
             + "pictureurl, updatedate) values(?, ?, ?, ?, ?, ?)",
             [itemid, itemname, price, description, pictureurl,
             getDate()], (err, results, fields) => {
@@ -318,38 +375,107 @@ app.post('/item/insert', upload.single('pictureurl'),
             }
         })
     });
+}); */
+
+// 데이터 삽입을 처리해주는 함수2(async-await)
+app.post('/item/insert', upload.single('pictureurl'),
+// async 추가
+async (req, res) => {
+    //파라미터 읽어오기
+    const itemname = req.body.itemname;
+    const description = req.body.description;
+    const price = req.body.price;
+
+    //파일 이름 - 업로드하는 파일이 없으면 default.jpg
+    let pictureurl;
+    if (req.file) {
+        pictureurl = req.file.filename
+    } else {
+        pictureurl = 'default.jpg';
+    }
+
+    //가장 큰 itemid 찾기
+    let itemid = 1;
+    try {
+        let x = await Good.max('itemid');
+        itemid = x + 1;
+    } catch (err) {
+        console.log(err);
+    }
+
+    // 데이터 삽입
+    Good.create({
+        itemid: itemid,
+        itemname: itemname,
+        price: price,
+        description: description,
+        pictureurl: pictureurl,
+        updatedate: getDate()
+    });
+
+    //현재 날짜 및 시간을 update.txt에 기록
+    const writeStream = fs.createWriteStream('./update.txt');
+    writeStream.write(getTime());
+    writeStream.end();
+
+    res.json({"result": true});
 });
 
 //데이터를 삭제하는 함수
-app.post('/item/delete', (req, res) => {
+/* app.post('/item/delete', (req, res) => {
     //post 방식으로 전송된 데이터 읽기
     let itemid = req.body.itemid;
 
     //itemid를 받아서 goods 테이블에서 삭제하기
-    connection.query("delete from goods where itemid=?",
-     [itemid], (err, results, fields)=>{
-        if(err){
-            console.log(err);
-            res.json({"result":false});
-        }else{
-            //현재 날짜 및 시간을 update.txt에 기록
-            const writeStream = fs.createWriteStream('./update.txt');
-            writeStream.write(getTime());
-            writeStream.end();
-            res.json({"result":true});
+    connection.query(
+        "delete from goods where itemid=?",
+        [itemid],
+        (err, results, fields) => {
+            if (err) {
+                console.log(err);
+                res.json({"result": false});
+            } else {
+                //현재 날짜 및 시간을 update.txt에 기록
+                const writeStream = fs.createWriteStream('./update.txt');
+                writeStream.write(getTime());
+                writeStream.end();
+                res.json({"result": true});
+            }
         }
-    });
+    );
+}); */
+
+//데이터를 삭제하는 함수2
+app.post('/item/delete', async(req, res) => {
+    //post 방식으로 전송된 데이터 읽기
+    let itemid = req.body.itemid;
+
+    try{
+        // 실제로 삭제하는 것이 아님 DB에 가면 존재하는데 DeletedAt에 컬럼에만 표시해두어
+        // find 할 때 찾아오지 않는 것.
+        // await 이하의 내용을 let deletedItem과 같은 변수에 담으면 Sequelize 삽/삭/갱은 작업이 이뤄진 데이터를 반환하기 때문에
+        // 무엇이 바꼈는지 알 수 있다.
+        await Good.destroy({ 
+            where: {
+                itemid: itemid
+            }
+        })
+    }catch(err){
+        console.log(err);
+        console.log({"result":false})
+    }
 });
 
 // 수정을 get으로 요청했을 때 - 수정 화면으로 이동하게 한다.
 app.get('/item/update', (req, res) => {
     // public 디렉터리의 update.html을 읽어내서 반환
-    fs.readFile('./public/update.html' , (err, data) => {
+    fs.readFile('./public/update.html', (err, data) => {
         res.end(data);
     })
 });
 
 
+// 수정을 처리하는 코드 1
 app.post('/item/update', upload.single('pictureurl'), (req, res) => {
     //파라미터 가져오기
     const itemid = req.body.itemid;
@@ -358,49 +484,92 @@ app.post('/item/update', upload.single('pictureurl'), (req, res) => {
     const description = req.body.description;
     //예전 파일 이름
     const oldpictureurl = req.body.oldpictureurl;
- 
+
     //수정할 파일 이름 만들기
     let pictureurl;
     //새로 선택한 파일이 있다면
-    if(req.file){
-         pictureurl = req.file.filename;
-    }else{
-         pictureurl = oldpictureurl;
+    if (req.file) {
+        pictureurl = req.file.filename;
+    } else {
+        pictureurl = oldpictureurl;
     }
     //데이터베이스 작업
-    connection.query("update goods set itemname=?, price=?," +  
-     "description=?, pictureurl=?, updatedate=? where itemid=?",
-      [itemname, price, description, pictureurl, getDate(),
-     itemid], 
-         (error, results, fields) => {
-         //console.log(results);
-         //console.log(fields);
-         if(error){
-             //에러가 발생한 경우
-             console.log(error);
-             res.json({"result": false});
-         }else{
-             //성공했을 때 처리
-             const writeStream = 
-                 fs.createWriteStream("./update.txt");
-             writeStream.write(getTime());
-             writeStream.end();
-             res.json({"result": true});
-         }
+    connection.query(
+        "update goods set itemname=?, price=?,description=?, pictureurl=?, updatedate=?" +
+                " where itemid=?",
+        [
+            itemname,
+            price,
+            description,
+            pictureurl,
+            getDate(),
+            itemid
+        ],
+        (error, results, fields) => {
+            //console.log(results); console.log(fields);
+            if (error) {
+                //에러가 발생한 경우
+                console.log(error);
+                res.json({"result": false});
+            } else {
+                //성공했을 때 처리
+                const writeStream = fs.createWriteStream("./update.txt");
+                writeStream.write(getTime());
+                writeStream.end();
+                res.json({"result": true});
+            }
+        }
+    )
+
+});
+
+// 수정을 처리하는 코드 1
+/* app.post('/item/update', upload.single('pictureurl'), async(req, res) => {
+    //파라미터 가져오기
+    const itemid = req.body.itemid;
+    const itemname = req.body.itemname;
+    const price = req.body.price;
+    const description = req.body.description;
+    //예전 파일 이름
+    const oldpictureurl = req.body.oldpictureurl;
+
+    //수정할 파일 이름 만들기
+    let pictureurl;
+    //새로 선택한 파일이 있다면
+    if (req.file) {
+        pictureurl = req.file.filename;
+    } else {
+        pictureurl = oldpictureurl;
+    }
+    //데이터베이스 작업
+    try{
+        await Good.update({
+            itemname:itemname,
+            price:price,
+            description:description,
+            pictureurl:pictureurl,
+            updatedate:getDate()
+        }, {where : {itemid:itemid}})
+        res.json({"result":true})
+    }catch(err){
+        console.log(err);
+        console.log({"result":false})
+    }
+
+}); */
+
+app.get('/item/updatedate', (req, res) => {
+    fs.readFile('./update.txt', (error, data) => {
+        res.json({'result': data.toString()});
     })
- 
- });
- 
- app.get('/item/updatedate', (req, res) => {
-     fs.readFile('./update.txt', (error, data)=>{
-         res.json({'result': data.toString()});
-     })
- });
+});
 
 // 에러 발생 시 처리하는 부분
 app.use((err, req, res, next) => {
     console.log(err);
-    res.status(500).send(err.message);
+    res
+        .status(500)
+        .send(err.message);
 });
 
 // 서버 구동

@@ -32,7 +32,7 @@ module.exports = class Good extends Sequelize.Model{
             sequelize,
             timestamps:true,
             underscored:false,
-            tableName:'goods',
+            tableName:'product',
             modelName:'Good',
             paranoid:true,
             charset:'utf8',
