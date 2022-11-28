@@ -1,4 +1,4 @@
-1. 프로그래밍 언어에서 관계형 데이터 베이스르르 사용하는 방법
+1. 프로그래밍 언어에서 관계형 데이터 베이스를 사용하는 방법
     => DB제조 업체에서 제공하는 드라이버를 사용하거나 SQL Mapper Framwork를 사용하는 방식.
         -> SQL을 이용한다.
         -> 사용하기 쉬워서 SI 같은 많은 인력이 진행하는 프로젝트에서 주로 사용한다. 
@@ -678,6 +678,17 @@
             }
         });
 
+        =>SPA(Single Page Application) 구현 방법 
+            하나의 HTML 파일에 스크립트를 이용해서 여러 개의 콘텐츠를 출력하는 방식 - 비추천
+            각 콘텐츠에 해당하는 별도의 html파일을 만들고 이를 불러들이는 방식
+            대부분의 SPA 프레임워크(React, Vue 등)들이 이 방식으로 구현(js 파일의 형태로 구현)
+            이렇게 만들어진 콘텐츠에 해당하는 파일들을 컴포넌트라고 함.
+            하나의 HTML에서 다른 HTML 파일을 가져오는 것은 ajax로 가능
+            <a href="파일 경로"> <a href="서버에 요청하는 경로">
+            클라이언트가 서버에 요청 -> 서버 -> 클라이언트에게 응답
+
+클라이언트가 어떤 행위를 할 떄 서버는 알고 있어야 한다.
+
     22) 첨부파일(이미지) 다운로드
         => 웹 브라우저에서는 파일에 링크가 걸려있으면 자신이 출력할 수 있는 파일은 출력하고 출력할 수 없는 파일은 다운로드를 수행한다.
         
@@ -962,7 +973,108 @@
     display += "<tr>" + "<td colspan='2' align='center' width='240'>"+ "<a href='#' id='updatebtn'>데이터 수정</a>" + "</td></tr>";
     
     =>수정 버튼을 눌렀을 때 처리를 위한 스크립트 코드를 추가
-        
-        
- 
+        //데이터 수정을 눌렀을 때 처리
+        let updatebtn = document.getElementById("updatebtn");
+                if(updatebtn != undefined){
+                    updatebtn.addEventListener('click', (e) => {
+                    let request = new XMLHttpRequest();
+                    request.open('GET', '/item/update');
+                    request.send('');
+                    request.addEventListener('load', () => {
+                        let html = request.responseText;
+                        content.innerHTML = html;
+                        //수정은 수정하기 위한 원본 데이터를 화면에 출력
+                        document.getElementById("itemid").value = item.itemid;
+                        document.getElementById("itemid").readOnly = true;
+                        document.getElementById("itemname").value = item.itemname;
+                        document.getElementById("price").value = item.price;
+                        document.getElementById("description").value = item.description;
+                        
+                        //원본의 이름을 숨김
+                        .getElementById("oldpictureurl").value = item.pictureurl;
+                        
+                        //원본을 다른 방식으로 출력
+                        document.getElementById("picture").src = "/img/" + item.pictureurl;
+                                                
+                        //수정 폼을 찾아오기
+                        let updateform = document.getElementById("updateform");
+                        if(updateform != undefined){
+                            //폼 안의 submit 버튼을 눌렀을 때
+                            updateform.addEventListener('submit', (e) => {
+                                //기본 이벤트 제거
+                                e.preventDefault();
+                                
+                                //전송할 데이터 생성 - 폼 안에 입력한 데이터 생성
+                                const formData = new FormData(updateform);
+
+                                //서버에게 요청
+                                let request = new XMLHttpRequest();
+                                request.open("POST", "/item/update");
+                                request.send(formData);
+
+                                //응답을 받았을 때 처리
+                                request.addEventListener('load', () => {
+                                let data = JSON.parse(request.responseText);
+                                if(data.result === true){
+                                    document.getElementById("listbtn").click();
+                                        alert("성공");
+                                }else{
+                                    alert("실패");
+                                }
+                            });
+                        })
+                    }
+                })
+            })
+        }
+
+        => Index.js에서 실제로 수정을 처리할 코드 작성
+            app.post('/item/update', upload.single('pictureurl'), (req, res) => {
+            //파라미터 가져오기
+            const itemid = req.body.itemid;
+            const itemname = req.body.itemname;
+            const price = req.body.price;
+            const description = req.body.description;
+            //예전 파일 이름
+            const oldpictureurl = req.body.oldpictureurl;
+
+            //수정할 파일 이름 만들기
+            let pictureurl;
+            //새로 선택한 파일이 있다면
+            if(req.file){
+                    pictureurl = req.file.filename;
+            }else{
+                    pictureurl = oldpictureurl;
+            }
+            //데이터베이스 작업
+            connection.query("update goods set itemname=?, price=?," +  
+                "description=?, pictureurl=?, updatedate=? where itemid=?",
+                [itemname, price, description, pictureurl, getDate(),
+                itemid], 
+                    (error, results, fields) => {
+                    //console.log(results);
+                    //console.log(fields);
+                    if(error){
+                        //에러가 발생한 경우
+                        console.log(error);
+                        res.json({"result": false});
+                    }else{
+                        //성공했을 때 처리
+                        const writeStream = 
+                            fs.createWriteStream("./update.txt");
+                        writeStream.write(getTime());
+                        writeStream.end();
+                        res.json({"result": true});
+                    }
+                })
+
+            });
+
+        => Index.js에 서버의 데이터가 마지막으로 업데이트 된 시간을 전송하는 처리 작성
+            app.get('/item/updatedate', (req, res) => {
+                fs.readFile('./update.txt', (error, data)=>{
+                    res.json({'result': data.toString()});
+                })
+            });
+
 

@@ -140,7 +140,6 @@ app.get('/', (req, res) => {
                 res.json({'result': true, 'list': result});
                 //res.send(result);
             }
-
         }
     )
 }); */
@@ -164,7 +163,6 @@ app.get('/item/all', async (req, res) => {
 /* app.get('/item/list', (req, res) => {
     // 파라미터 읽어오기
     let pageno = req.query.pageno;
-
     if (pageno == undefined) {
         pageno = 1;
     }
@@ -188,7 +186,6 @@ app.get('/item/all', async (req, res) => {
             }
         }
     );
-
     // 테이블의 전체 데이터 개수를 가져오기
     let dataCnt = 0;
     connection.query("select count(*) cnt from goods;", (err, result, fields) => {
@@ -206,7 +203,6 @@ app.get('/item/all', async (req, res) => {
             res.json({"result": true, "list": list, "count": dataCnt});
         }
     });
-
 }); */
 
 // 데이터 일부분 가져오기2(페이지 단위) - URL:/item/list , 파라미터는 pageno 1개 인데 없으면 1로 설정
@@ -239,7 +235,6 @@ app.get('/item/list', async (req, res) => {
 /* app.get('/item/detail/:itemid', (req, res) => {
     // 파라미터 읽기
     let itemid = req.params.itemid;
-
     // itemid를 이용해서 1개의 데이터를 찾아오는 SQL을 실생
     connection.query(
         "select * from goods where itemid = ?",
@@ -336,7 +331,6 @@ const getTime = () => {
     const itemname = req.body.itemname;
     const description = req.body.description;
     const price = req.body.price;
-
     //파일 이름 - 업로드하는 파일이 없으면 default.jpg
     let pictureurl;
     if(req.file){
@@ -344,7 +338,6 @@ const getTime = () => {
     }else{
         pictureurl = 'default.jpg';
     }
-
     //가장 큰 itemid 찾기
     connection.query("select max(itemid) maxid from goods",
     [], (err, results, fields) => {
@@ -355,7 +348,6 @@ const getTime = () => {
         }else{
             itemid = 1;
         }
-
         //데이터 삽입
         connection.query("insert into goods(" +
             "itemid, itemname, price, description,"
@@ -370,7 +362,6 @@ const getTime = () => {
                 const writeStream = fs.createWriteStream('./update.txt');
                 writeStream.write(getTime());
                 writeStream.end();
-
                 res.json({"result":true});
             }
         })
@@ -425,7 +416,6 @@ async (req, res) => {
 /* app.post('/item/delete', (req, res) => {
     //post 방식으로 전송된 데이터 읽기
     let itemid = req.body.itemid;
-
     //itemid를 받아서 goods 테이블에서 삭제하기
     connection.query(
         "delete from goods where itemid=?",
@@ -484,7 +474,6 @@ app.get('/item/update', (req, res) => {
     const description = req.body.description;
     //예전 파일 이름
     const oldpictureurl = req.body.oldpictureurl;
-
     //수정할 파일 이름 만들기
     let pictureurl;
     //새로 선택한 파일이 있다면
@@ -520,7 +509,6 @@ app.get('/item/update', (req, res) => {
             }
         }
     )
-
 }); */
 
 // 수정을 처리하는 코드 1
@@ -575,4 +563,4 @@ app.use((err, req, res, next) => {
 // 서버 구동
 app.listen(app.get('port'), () => {
     console.log(app.get('port'), '번 포트에서 대기 중')
-})
+});
