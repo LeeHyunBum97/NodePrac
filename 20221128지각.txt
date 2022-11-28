@@ -381,3 +381,90 @@ Node_ORM
             created_at  - 날짜
             updated_at  - 날짜
         
+    9) 테이블을 생성을 위해서 models 디렉토리에서 model을 생성 
+
+        - models 디렉토리에 users 테이블의 해당되는 model users.js를 생성
+            const Sequelize = require('sequelize');
+
+            module.exports = class User extends Sequelize.Model{
+                static init(sequelize){
+                    return super.init({
+                        name:{
+                            type:Sequelize.STRING(20),
+                            allowNull:false,
+                            unique:true
+                        },
+                        age:{
+                            type:Sequelize.INTEGER.UNSIGNED,
+                            allowNull:true
+                        }
+                    }, { 
+                        sequelize,
+                        timestamps:true,
+                        underscored:false,
+                        tableName:'users',
+                        modelName:'User',
+                        paranoid:true,
+                        charset:'utf8',
+                        collate:'utf8_general_ci'
+                    })
+                }
+                static associate(db){
+                    // 외래 키에 대한 설정 1측
+                    db.User.hasmany(db.Comment, {foreignKey: 'commenter', sourceKey:'id'});
+                }
+            }
+
+        - models 디렉토리에 comments 테이블에 해당되는 model commets.js 생성
+            const Sequelize = require('sequelize');
+
+            module.exports = class Comment extends Sequelize.Model{
+                static init(sequelize){
+                    return super.init({
+                        comment:{
+                            type:Sequelize.STRING(100),
+                            allowNull:false,
+                        }
+                    }, { 
+                        sequelize,
+                        timestamps:true,
+                        underscored:false,
+                        tableName:'comments',
+                        modelName:'Comment',
+                        paranoid:true,
+                        charset:'utf8',
+                        collate:'utf8_general_ci'
+                    })
+                }
+                static associate(db){
+                    // 외래키에 대한 설정 N측
+                    db.Comment.belongsTo(db.User, {foreignKey:'commenter', targetKey:'id'});
+                }
+            }
+        - users 와 comments는 1대N 관계 Hasmany - BelongsTo 
+
+    10) models 디렉토리의 index.js 에서 시퀄라이즈와 어소시케이트 모두 불러오기
+
+        const Sequelize = require("sequelize");
+
+        const User = require('./users.js');
+        const Comment = require('./comments.js')
+
+        const env = process.env.NODE_ENV || 'development';
+        const config = require('../config/config.json')[env];
+
+        const db = {}
+
+        const sequelize = new Sequelize(config.database, config.username, config.password, config);
+
+        db.sequelize = sequelize;
+        db.User = User
+        db.Comment = Comment
+
+        User.init(sequelize);
+        Comment.init(sequelize);
+
+        User.associate(db)
+        Comment.associate(db);
+
+        module.exports = db;
