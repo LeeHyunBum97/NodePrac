@@ -1,38 +1,23 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
+//모듈 import
 const Sequelize = require('sequelize');
-const process = require('process');
-const basename = path.basename(__filename);
+//모델 가져오기
+const Good = require('./good');
+
+//환경 설정
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../config/config.json')[env];
+//환경 설정 내용 가져오기
+const config = require('../config/config.json')[env];
+//내보낼 객체 생성
 const db = {};
-
-let sequelize;
-if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
-} else {
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
-}
-
-fs
-  .readdirSync(__dirname)
-  .filter(file => {
-    return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
-  })
-  .forEach(file => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
-    db[model.name] = model;
-  });
-
-Object.keys(db).forEach(modelName => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
-  }
-});
+//ORM 설정
+const sequelize = new Sequelize(
+  config.database, config.username, config.password, config);
 
 db.sequelize = sequelize;
+
 db.Sequelize = Sequelize;
+
+db.Good = Good;
+Good.init(sequelize);
 
 module.exports = db;

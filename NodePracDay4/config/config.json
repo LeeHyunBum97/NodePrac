@@ -2,14 +2,14 @@
   "development": {
     "username": "root",
     "password": "8236",
-    "database": "database_development",
+    "database": "adam",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },
   "test": {
     "username": "root",
     "password": "8236",
-    "database": "database_test",
+    "database": "adam",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },

@@ -110,6 +110,8 @@ connection.connect((error) => {
 //require 할 때 디렉터리 이름을 기재하면 
 // 디렉터리 안의 index.js의 내용을 impor
 const {sequelize} = require('./models');
+const {Good} = require('./models')
+
 sequelize.sync({force:false})
 .then(() => {
     console.log("데이터 베이스 연결 성공")
