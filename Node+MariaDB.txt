@@ -962,3 +962,7 @@
     display += "<tr>" + "<td colspan='2' align='center' width='240'>"+ "<a href='#' id='updatebtn'>데이터 수정</a>" + "</td></tr>";
     
     =>수정 버튼을 눌렀을 때 처리를 위한 스크립트 코드를 추가
+        
+        
+ 
+

@@ -7,13 +7,7 @@ SPA(Single Page Application) 구현 방법
     <a href="파일 경로"> <a href="서버에 요청하는 경로">
     클라이언트가 서버에 요청 -> 서버 -> 클라이언트에게 응답
 
-💡 클라이언트가 어떤 행위를 할 떄 서버는 알고 있어야 한다.
- 
-
-12. 서버의 데이터가 마지막으로 업데이트 된 시간을 전송하는 처리를 App.js 파일에 작성
-더보기
- 
-
+클라이언트가 어떤 행위를 할 떄 서버는 알고 있어야 한다.
 프로그래밍 언어에서 관계형 데이터 베이스를 사용하는 방법
 
 1. 데이터 베이스 드라이버만 이용해서 작업
@@ -468,3 +462,35 @@ Node_ORM
         Comment.associate(db);
 
         module.exports = db;
+
+    11) App.js에 '/' 경로로 접속시 users 테이블에 데이터 추가하기
+        const express = require('express');
+        const path = require('path');
+
+        const app = express();
+        app.set('port', process.env.PORT || 3000);
+
+        // sequelize 연결
+        const {sequelize} = require('./models');
+        sequelize
+            .sync({force: false})
+            .then(() => {
+                console.log("데이터베이스 연결 성공");
+            })
+            .catch((err) => {
+                console.log("데이터 베이스 연결 실패");
+            });
+
+        const User = require('./models/users');
+        const Comment = require('./models/comments');
+        app.get('/', (res, req) => {
+            const user = User.create({
+                name:'군계',
+                age : 44
+            });
+            console.log(user)
+        })
+
+        app.listen(app.get('port'), () => {
+            console.log(app.get('port'), "번 포트에서 서버 대기 증)");
+        })
