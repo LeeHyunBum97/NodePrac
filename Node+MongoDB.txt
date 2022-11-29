@@ -1,5 +1,6 @@
+[NodePrac7]
 1. Node + MongoDB
-    => Mongo DB 연결
+    1) Mongo DB 연결
         -> 드라이버 페키지 이름
             mongodb
         
@@ -14,5 +15,41 @@
                     // db를 가지고 작업 수행
                 }
             });
+
+        -> 샘플 데이터 삽입
+            use item
+            db.item.insert({'itemid':1, 'itemname':'레몬', 'price':500, 'description':'비타민 C가 풍부한쓴 귤', 'pictureurl':'lemon.jpg'})
+            db.item.insert({'itemid':2, 'itemname':'오렌지', 'price':1500, 'description':'비타민 C가 풍부한 당귤', 'pictureurl':'orange.jpg'})
+            db.item.insert({'itemid':3, 'itemname':'키위', 'price':2000, 'description':'비타민 C가풍부한 다래', 'pictureurl':'kiwi.jpg'})
+            db.item.insert({'itemid':4, 'itemname':'포도', 'price':1000, 'description':'항산화 성분과 당분이 높고 무기물이 많은 과일', 'pictureurl':'grape.jpg'})
+            db.item.insert({'itemid':5, 'itemname':'딸기', 'price':2000, 'description':'수분 함량이 높은 과일', 'pictureurl':'strawberry.jpg'})
+            db.item.insert({'itemid':6, 'itemname':'무화과', 'price':300, 'description':'칼슘, 섬유질 및 항산화 물질을 많이 함유한 식물', 'pictureurl':'fig.jpg'})
+
+    2) Node 프로젝트 생성 & npm init
+        => Entry Point 는 App.js
+
+        => 패키지 설치
+           npm install express morgan multer mongodb ejs
+           npm install --save-dev nodemon
+
+        => Package.json 파일에서 Entry Point App.js로 변경
+            "Scripts" : { 
+                ...
+                "start" : "nodemon App.js" 
+                ...
+            }
+
+        => 필요한 디렉토리 생성
+            img, views
+
+    3) App.js 파일에 application server 기본틀과 mongodb 연결
+        -> 라이브러리 가져올 때 참고 사항
+            // mongodb의 index.js파일에서 내보낸 것을 mongodb로 사용한다는 의미
+            let MongoClient = require('mongodb').MongoClient;
+
+            // mongodb의 index.js 파일에서 내보낸 것 중 MongoClient인 것만 받아서 MongoClient 로 사용한다는 의미
+            let {MongoClient} = require('mongodb').MongoClient;
+
+
 
 2. Node + MongoDB + mongoose(Node의 ODM)
