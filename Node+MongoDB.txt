@@ -163,6 +163,14 @@
         });
     });
 
+    7) App.js 파일에 client 에서 item/insert 경로의 POST 요청으로 node DB의 item Collection의 데이터 하나의 새로운 정보 삽입하기
 
+    8) 수정하기(구현 X)
+        .update({속성이름:값}, {$set:{속성이름 : 수정할 값,...}}, (error, result) => {})
+        .update({"itemid:값}, {$set:{"itemname" : 수정할 값,...}}, (error, result) => {})
 
+    9) 삭제하기(구현 X)
+        .deleteOne({"속성이름":값}, (error, result) => {})
+        
+    => 주의 할 점은 MongoDB는 숫자와 문자열을 명확하게 구분
 2. Node + MongoDB + mongoose(Node의 ODM)
