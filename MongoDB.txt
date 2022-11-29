@@ -121,3 +121,94 @@ MongoDB
         => insert 를 이용한 삽입 후 확인
             db.users.insert({name:"adam", age:"17", job:"singer"})
             db.users.find()
+
+        => 객체나 배열 삽입 가능
+            db.inventory.insert({
+                item:"ABC1", details:{
+                    model:"123",
+                    manufacture:"xyz"
+                },
+                stock:[{size:"s", qty:25}, {size:"m", qty:22}],
+                category:"clothing"
+            })
+            => 관계형 데이터베이스는 테이블의 컬럼안에 하나의 값만 입력할 수 있다.
+            => 다른 테이블의 데이터나 배열을 대입할 수 없다.
+            => 이런 이유로 여러개의 테이블을 만들어야하고 여러 정보를 가져오기 위해서는 join을 여러차례 수행해야 한다.
+
+        => root(최상단 요소) 가 배열인 경우 데이터를 분할해서 삽입(배열로 저장되지 않고 분리되어 저장되낟.)
+            db.test.insert([{name:"matt"}, {name:"lara"}])
+            db.test.find()
+
+        => 데이터를 삽입할 때 두번째 매개변수로 orederd 옵션에 true를 설정하면 single theread 형태로 데이터를 삽입하고 false로 설정하면 multi thread 형태로 삽입한다.
+            -> thread는 다른 thread에게 영향을 주지 않는다.
+            -> orederd가 true 이면 중간에 삽입이 실패 되면 다음 작업을 수행하지 않지만 orderd가 false라면 중간에 작업이 실패하더라도 나머지 작업을 수행한다.
+
+            # sample 컬렉션에 name 속성의 값은 중복되지 않도록 인덱스 생성
+            -> db.sample.createIndex({name:1}, {unique:true})
+
+            -> db.sample.insert({name:"adam"})
+
+            # 3개 데이터를 삽입하는데 두번째 데이터는 일부러 이미 존재하는 데이터 삽입(에러 일부러 발생) 후 orederd를 true(싱글스레드)설정
+            -> db.sample.insert([{name:"karina"}, {name:"adam"}, {name:"minji"}], {oredered:true})
+            -> 싱글스레드로 삽입작업을 수행했기 때문에 두번째 데이터를 삽입하다가 에러가 발생하고 minji에 해당하는 데이터는 삽입되지 않는다.
+
+            # 위와 똑같이 데이터를 삽입하되 orderd를 false로 주어 멀티스레드로 설정
+            -> db.sample.drop()
+            -> db.sample.createIndex({name:1}, {unique:true})
+            -> db.sample.insert({name:"adam"})
+
+            # 에러 없이 모든 데이터가 삽입된다.
+            -> db.sample.insert([{name:"karina"}, {name:"adam"}, {name:"minji"}], {oredered:false})
+            -> db.sample.find()
+
+        => insertOne은 하나의 데이터를 삽입할 때 사용하고 insertMany는 여러개의 데이터를 삽입할 때 사용하는 함수
+
+        => ObjectId
+            MongoDB의 자료형으로 12byte로 구성된다.
+            컬렉션에 기본키를 생성하기 위해 제공되는 자료형이다.
+            삽입할 때 _id 라는 컬럼에 자동으로 대입된다.
+            new ObjectId() 로 인스턴스를 생성해서 직접 설정해서 대입하는 것도 가능하다.
+
+    4) 조회
+        => db.컬렉션이름.find(<query>,<projection>)
+            -> selection : select 구문에서 where 정레 해당하는 것으로 조건을 가지고 테이블을 수평 분할하기 위한 연산이다.
+            -> projection : select 구문에서 select에 해당하는 것으로 컬럼이름을 가지고 테이블을 수직 분할 하기 위한 연산이다.
+
+        => 컬렉션의 전체 데이터 조회
+            -> db.컬렉션이름.find()
+            
+            # users 컬렉션의 모든 데이터 조회
+            -> db.users.find()
+
+
+        => 조건을 이용한 조회
+            -> db.컬렉션이름.find({조건})
+
+            # users 컬렉션의 name이 adam인 데이터 조회
+            -> db.users.find({name:"adam"})
+
+            # 하나의 객체에 여러 속성의 값을 나열하면 and
+            # containerBox 컬렉션에서 category는 animal이고 name은 bear인 데이터 조회
+            -> db.containerBox.find({category:"anmimal"}, {name:"bear"})
+
+        => 컬럼 추출
+            -> db.컬렉션이름.find({}, {속성이름: true 또는 false}, ...)
+            -> true로 설정하면 출력되고 false로 설정하면 출력되지 않는다.
+
+        => 비교연산자
+            $eq  : =
+            $ne  : !=
+            $gt  : >
+            $gte : >=
+            $lt  : <
+            $lte : <=
+            $in  : in
+            $nin : not in
+
+            -> db.users.find({name:{$eq:"adam"}})
+            -> db.users.find({score:{$ge:90}})
+            -> db.users.find({name:{$in:["adam", "matt"]}})
+
+        => 조회 시 문자열 자리에 정규표현식 사용가능
+            # b로 시작하는 문자열 검색
+            -> db.users.find({name:{$in:[/^b/]}})
