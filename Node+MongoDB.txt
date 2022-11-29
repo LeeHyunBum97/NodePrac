@@ -1,0 +1,18 @@
+1. Node + MongoDB
+    => Mongo DB 연결
+        -> 드라이버 페키지 이름
+            mongodb
+        
+        -> 연결 코드
+            let MongoClient = require('mongodb').MongoClient
+            MongoClient.connect('mongodb://아이디:비밀번호@ip:포트번호', (err, database) =>{
+                if(err){
+                    // 에러 발생했을 때 처리
+                }else{
+                    // 정상 작동했을 때 처리
+                    let db = database.db('데이터베이스 이름');
+                    // db를 가지고 작업 수행
+                }
+            });
+
+2. Node + MongoDB + mongoose(Node의 ODM)
