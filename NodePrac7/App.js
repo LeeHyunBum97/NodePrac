@@ -173,46 +173,52 @@ app.get('/item/:itemid', (req, res) => {
 
 // 데이터 삽입 구현
 // itemname, description, price, pictureurl(파일) 받기
-app.post('item/insert', upload.single('pictureurl'),(req, res) => {
+app.post('/item/insert', upload.single('pictureurl'),(req,res)=> {
     // 파라미터 읽어오기
     const itemname = req.body.itemname;
     const description = req.body.description;
     const price = req.body.price;
-    
     let pictureurl;
-    // 업로드한 파일이 있으면 파일의 이름을 설정하고
-    // 없으면 디폴트 값 설정
-    if(req.file){
+    //업로드한 파일이 있으면 파일의 이름을 설정하고
+    //없으면 디폴트 값 설정
+    if (req.file) {
         pictureurl = req.file.filename;
     } else {
         pictureurl = 'default.jpg';
     }
-    MongoClient.connect(databaseUrl, {useNewUrlParser}, (error, database) => {
-        if(error){
-            console.log(error);
-            res.json({"result":false})
-        }else{
-            let db = database.db('node');
-            
-            // 가장 큰 itemid 찾아오기 -> 가장 큰 PK에 삽입해야 삭제되어서 빈 PK 인덱스에 들어가기 때문
-            db.collection("item").find({}, {projection:{_id:0, itemid:1}}).sort({itemid:-1}).limit(1).toArray((error, result) => {
-                let itemid = 1;
-                if(result[0] != null){
-                    itemid = result[0].itemid+1
-                }
-                db.collection('item').insertOne({
-                    "itemid":itemid,
-                    "description":description,
-                    "price":price,
-                    "pictureurl":pictureurl
-                }, (error, result) => {
-                    if(error){res.json({"result":false})}
-                    else res.json({"result":true})
-                })
-            });
-        }
-    });
+
+    MongoClient.connect(databaseUrl, {useNewUrlParser:true},
+        (error,database) => {
+            if(error) {
+                console.log(error);
+                res.json({"result":false});
+            } else {
+                let db = database.db('node');
+                // 가장 큰 itemid를 찾아오기
+                db.collection("item").find({}, {projection:{_id:0, itemid:1}})
+                .sort({itemid:-1}).limit(1).toArray((error, result)=>{
+                    let itemid = 1;
+                    if (result[0] != null) {
+                        itemid = result[0].itemid + 1;
+                    }
+                    db.collection('item').insertOne({
+                        "itemid":itemid,
+                        "itemname":itemname,
+                        "description":description,
+                        "price":price,
+                        "pictureurl":pictureurl
+                    }, (error, result) => {
+                        if (error) {
+                            res.json({"result":false});
+                        } else {
+                            res.json({"result":true});
+                        }
+                    })
+                });
+            }
+        });
 });
+
 
 //에러 처리를 위한 부분
 app.use((err, req, res, next) => {

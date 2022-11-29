@@ -37,7 +37,7 @@ MongoDB
         Win: MongoDB 설치 경로의 bin 디렉토리에 파일이 존재
 
         docker 
-            vim ediotr 사용시 -> apt update -> apt upgrade -> apt install vim
+            vim ediotr 사용시 -> docker exec -it mongo bash ->apt update -> apt upgrade -> apt install vim
             docker exec -it mongodb bash
             vim /etc/mongod.conf.orig
             이후 bind_ip를 0.0.0.0 으로 설정
