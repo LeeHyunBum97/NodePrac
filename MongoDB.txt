@@ -1,0 +1,103 @@
+MongoDB
+
+1. MongoDB
+    => 도큐먼트 지향 No SQL
+    => JSON 형식의 BSON 이라는 데이터 구조를 사용
+    => 샤딩(데이터를 나누어서 저장하는 기술)과 복제를 지원한다.
+
+2. 설치
+    1) 설치
+        => windows : MongoDB 사이트에서 다운 받아서 설치.
+        => mac (운영체제를 업데이트 한 경우 x-code-select --install 명령 수행후 아래 명령 실행) 
+            brew tap mongodb/brew
+            brew install mongodb-community 
+        => Linux 는 버전 마다 다르므로 문서 참고
+
+        => docker(Win)
+            이미지 다운로드
+            powershell 이나 cmd에서 docker pull mongo로 
+            
+    2) 서버 실행
+        => Window
+            service에 등록된 경우에는 sercive에서 실행과 중지할 수 있음
+            cmd 창에서 mongo --dbpath 데이터 저장 경로 명열으로 실행 가능 -mongod 명령은 mongo db 설치 경로에 존재
+        
+        => Mac
+            brew service start mongodb-community
+            brew service stop mongodb-community
+
+        => docker(Win)
+            컨테이너 생성 및 실행
+            docker run --name mongodb -d -p 27017:27017 mongo
+
+    3) 외부 접속 허용
+        mongod.conf 파일이나 mongod.cfg 파일을 수정
+
+        Mac: /usr/local/var/log/mongodb/mongo.log
+        Win: MongoDB 설치 경로의 bin 디렉토리에 파일이 존재
+
+        docker 
+            vim ediotr 사용시 -> apt update -> apt upgrade -> apt install vim
+            docker exec -it mongodb bash
+            vim /etc/mongod.conf.orig
+            이후 bind_ip를 0.0.0.0 으로 설정
+
+        -> bindlp 부분을 0.0.0.0으로 설정하면 모든 곳에서 접속이 가능하다.
+        -> Win은 설정파일을 변경하고 서버를 실행할 때 Mongod --dbpath 데이터 저장 경로 --bind_ip 0.0.0.0
+
+    4) 접속 프로그램
+        compass: windows 에서는 mongodb를 설치할 때 같이 설치
+        
+        Mac에서는 따로 찾아서 설치 필요
+
+3. MongoDB 구성요소
+
+    database > collection > document
+
+    => RDBMS와의 비교
+        DB    - DB
+        Table - Collection
+        Row(record, Tuple) - Document
+        Coulmn(Attribute) - Field
+        Index - Index
+        Join - Embedding & Linking
+
+        RDBMS 조회의 결과는 DB Row 들의 집합이지만 Mongo DB는 데이터에 접근할 수 있는 cursor
+
+4. Mongo DB CRUD
+    => JSON 형식
+        객체 : {"속성 이름" : 값, "속성 이름" : 값 ...}
+        배열 :  [데이터, 데이터,...] 
+
+        값에 문자열, 숫자, boolean, 날짜, null이 올 수 있고 다른 객체나 배열이 올 수 있습니다.
+        데이터도 모든 종류의 값이 모두 올 수 있다.
+    
+    1) DB 작업
+        => MongoDB에서 가장 큰 저장소의 개념
+        => 확인 : show dbs;
+        => 생성은 create로 할 수 도 있지만 use 데이터베이스이름 을 사용하면 가능하다.
+        => DB를 생성하더라도 데이터가 없으면 show dbs 에서 출력되지 않는다
+
+        => 데이터 삽입한 후 show dbs 수행
+            db.컬렉션이름.insertOne({속성이름 : 값}
+
+    2) collection
+        => 데이터의 집합
+        => RDBMS의 테이블과 유사하지만 모든 종류의 데이터를 저장할 수 있다는 측면에서 보면 테이블과는 다르다.
+           그렇지만 실제로는 대부분 동일한 모양의 데이터만 저장한다.
+
+        => collection 생성
+            db.createCollection(이름)
+            하지만 위와 같은 명령어 없이 처음 사용하면 자동으로 생성 가능하다.
+
+        => 현재 존재하는 컬렉션 확인
+            show collection
+
+        => 컬렉션 이름 변경
+            db.컬렉션이름.renameCollection(변경할 이름)
+
+        => Capped Collection
+            크기를 제한해서 생성할 수 있는 컬렉션으로 크기보다 많은양의 데이터를 저장하고자 하면 오래된 데이터가 삭제되면서 저장한다.(CcTV)
+            db.createCollection(컬렉션이름, {capped:true, size: 크기})
+
+            크기 단위는 Byte
