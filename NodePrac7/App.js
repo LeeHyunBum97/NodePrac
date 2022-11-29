@@ -63,9 +63,80 @@ let MongoClient = require('mongodb').MongoClient
 let databaseUrl = 'mongodb://localhost:27017/';
 
 // node DB의 item 컬렉션에 존재하는 모든 데이터를 반환한다.
-app.get('/', (req, res) => {
-    
-})
+app.get('/item/all', (req, res) => {
+    // 데이터 베이스 연결
+    MongoClient.connect(databaseUrl, {useNewUrlParser:true}, (error, database) => {
+        if(error){
+            console.log(error);
+
+            // 절대로 client 입자에서는 튕겨버리지 않고 그냥 에러나 실패를 출력하는 편이 나음
+            // 404 에러이면 "죄송합니다, 요청하신 페이지를 찾을 수 없습니다." 라고 출력하는 것이 낫다.
+            res.json({"result":false, "message":"이유"});
+        } else {
+            // 데이터 베이스 가져오기
+            // database.db('사용할 DB이름')
+            let db = database.db('node')
+
+            // item 컬렉션의 모든 데이터 가져오기
+            db.collection("item").find().sort({itemid:-1}).toArray((error, items) => {
+                if(error){
+                    console.log(error);
+                    res.json({"result":false, "message":"이유"});
+                }else{
+                    res.json({"result":true, "list":items, "count":items.length});
+                }
+            })
+            res.json({"result":true})
+        }
+    })
+});
+
+// node 데이터 베이스의 item 컬렉션의 데이터를 페이지 단위로 가져오기
+// 데이터베이스에서 페이지 단위로 데이터를 가져올 때는 건너뛸 개수와 가져올 데이터 개수가 필요
+
+// 클라이언트에서 넘겨주는 데이터 : 페이지 번호와 데이터 개수
+app.get('/item/paging', (req, res) => {
+    // 클라이언트의 데이터 받아오기
+    let pageno = req.query.pageno; // 페이지 번호
+    let count = req.query.count; // 한 번에 가쟈올 데이터 개수
+
+    // 건너뛸 개수 계산
+    if(pageno == undefined){
+        pageno = 1;
+    }
+    if(count == undefined){
+        count = 2;
+    }
+
+    let start = (parseInt(pageno) - 1) * parseInt(count);
+
+    // 데이터 베이스 연결
+    MongoClient.connect(databaseUrl, {useNewUrlParser:true}, (error, database) => {
+        if(error){
+            console.log(error);
+
+            // 절대로 client 입자에서는 튕겨버리지 않고 그냥 에러나 실패를 출력하는 편이 나음
+            // 404 에러이면 "죄송합니다, 요청하신 페이지를 찾을 수 없습니다." 라고 출력하는 것이 낫다.
+            res.json({"result":false, "message":"이유"});
+        } else {
+            // 데이터 베이스 가져오기
+            // database.db('사용할 DB이름')
+            let db = database.db('node')
+
+            // item 컬렉션의 모든 데이터 가져오기
+            db.collection("item").find().sort({itemid:-1}).skip(start).limit(count).toArray((error, items) => {
+                if(error){
+                    console.log(error);
+                    res.json({"result":false, "message":"이유"});
+                }else{
+                    res.json({"result":true, "list":items, "count":items.length});
+                }
+            })
+            res.json({"result":true})
+        }
+    })
+});
+
 
 //에러 처리를 위한 부분
 app.use((err, req, res, next) => {
