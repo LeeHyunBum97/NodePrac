@@ -55,7 +55,7 @@
            - wsl --status 명령어로 현재 실행중인 wsl 확인.(버전 2)
 
         => Maria DB image(설치까지 되어 있는 환경) 다운로드
-           - docker pull mariadb versiton (생략시 마리아 DB)
+           - docker pull mariadb version (생략시 마리아 DB)
         
         => Maria DB 실행
             - docker run --name mariadb -d -p 외부에서 접속할 포트번호:MariaDB 포트 번호 -e MYSQL_ROOR_PASSWORD=루트비밀번호 컨테이너 이름
