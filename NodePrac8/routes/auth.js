@@ -64,7 +64,7 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
                 console.error(loginError);
                 return next(loginError);
             }
-            // 로그인 성곡하면 메인 페이지로 이동
+            // 로그인 성공하면 메인 페이지로 이동
             return res. redirect('/');
         })
     })(req, res, next);

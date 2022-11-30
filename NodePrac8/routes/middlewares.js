@@ -1,5 +1,7 @@
 // 로그인 했을 경우를 판단
 exports.isLoggedIn = (req, res, next) => {
+    // 로그인 여부 판단 - req.session.user가 존재하는지 확인
+    // 있다면 true를 없다면 false를 반환
     if(req.isAuthenticated()){
         next();
     }else {
