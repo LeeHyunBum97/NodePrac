@@ -93,6 +93,9 @@ const pageRouter = require('./routes/page');
 // 이곳에 설정한 URL과 page.js에 설정된 URL조합으로 URL을 결정
 app.use('/', pageRouter);
 
+const authRouter = require('./routes/auth');
+app.use('/auth', authRouter);
+
 // 404 에러가 발생한 경우 처리
 app.use((req, res, next) => {
     const err = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);

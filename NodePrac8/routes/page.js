@@ -28,12 +28,12 @@ router.get('/',(req, res, next) => {
 });
 
 //회원가입 - 로그인이 되어있지 않은 경우에만 수행
-router.get('/join', isNotLoggedIn(), (req, res, next) => {
+router.get('/join', isNotLoggedIn, (req, res, next) => {
     res.render('join', {title: "회원가입 - Node Authencation"});
 });
 
 //프로필 화면 처리 - 로그인 되어 있는 경우에만 수행
-router.get('/profile', isLoggedIn(), (req, res, next) => {
+router.get('/profile', isLoggedIn, (req, res, next) => {
     res.render('profile', {title: "나의 정보 - Node Authencation"});
 });
 

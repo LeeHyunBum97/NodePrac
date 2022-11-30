@@ -44,3 +44,43 @@ router.post('/join', async(req, res, next) => {
         return next(error);
     }
 });
+
+// 로그인 처리
+router.post('/login', isNotLoggedIn, (req, res, next) => {
+    // passport 모듈을 이용해서 로그인
+    passport.authenticate('local', (authError, user, ingo) => {
+        if(authError){
+            console.log(authError);
+            return next(authError);
+        }
+
+        // 일치 하는 User가 없을 때
+        if(!user){
+            return res.redirect(`/?loginError=${info.message}`)
+        }
+
+        return req.login(user, (loginError) => {
+            if(loginError){
+                console.error(loginError);
+                return next(loginError);
+            }
+            // 로그인 성곡하면 메인 페이지로 이동
+            return res. redirect('/');
+        })
+    })(req, res, next);
+});
+
+// 로그아웃 처리
+router.get('/logout', isLoggedIn, (req, res, next) => {
+    req.logout((error) => {
+        if(error){
+            return next(error);
+        }
+
+        // 로그 아웃시 세션 초기화
+        req.session.destroy();
+        res.redirect('/');
+    })
+});
+
+module.exports = router;
