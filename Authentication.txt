@@ -1,0 +1,149 @@
+[NodePrac8]
+Authentication(인증)
+
+1. Authentication(인증)과 Authorization(인가)
+    => 인증 : 계정관련, 로그인 관련
+    => 인가 : 권한 봔련
+
+2. 인증을 구현하는 방법으로
+    => 로컬 로그인 : 회원 정보를 저장하고 있다가 인증
+    회원 정보를 저장할 때는 비밀 번호는 복호화가 불가능 한 방식을 사용하고 개인을 식별할 수 있는 정보를 마스킹 처리를 하거나 복호화가 가능한 방식의 암호화를 활용해야 한다.
+
+
+    => OAuth(공통된 인증 방식) 로그인 : 다른서버(카카오, 네이버 등)에 저장된 인증정보를 활용해서 인증하는 방식
+
+
+3. 인증을 위한 프로젝트 기본 설정
+    => 로그인을 할 수 있도록 회원가입을 하고 로그인 처리를 수행하고 간단한 글과 파일을 업로드 할 수 있는 프로젝트
+
+    1) 프로젝트 생성 [NodePrac8]
+
+    2) 필요한 패키지 설치
+        npm install express morgan dotenv compression morgan file-stream-rotator multer cookie-parser express-session express-mysql-session mysql2 sequelize sequelize-cli nunjucks
+        npm install --save-dev nodemon
+
+    3) Package.json 수정
+         "scripts": {
+            "start": "nodemon App.js",
+            "test": "echo \"Error: no test specified\" && exit 1"
+        }
+
+    4) sequelize 초기화
+        => npx sequelize init
+
+    5) 디렉토리 생성
+        => views : 화면에 출력할 파일(VIEW)들이 저장되는 디렉토리
+        => routes : 사용자의 요청이 왔을 때 처리하는 (CONTROLLER) 라우팅 파일이 저장되는 폴더
+        => public : 정적인 파일(Resource)가 저장되는 디렉터리
+
+    6) 프로젝트에 .env파일 생성 후 작성
+        => 소스 코드에 노출되서 안되는 내용이나 개발 환경에서 운영환경으로 이행(Migration)할 때 변경될 내용을 작성하는데 이내용은 실행 중에는 변경되지 않는 내용이어야 한다.
+        => 대표적인 내용이 DB접속 정보나 암호화를 하기 위한 Key 또는 서버 포트번호 와 같은 것들이 있다.
+        => 이런 내용은 대부분 실행 중에는 변경되지 않지만 개발 환경에서 운영환경으로 이행 할 때 변경될 가능성이 높은 내용이다.
+
+    
+    P.S. App.js는 모든 클라이언트의 요청이 들어오는 곳 - Front-End
+         routes 디렉토리 안의 js 파일들은 특정요청에 대한 처리를 수행하는 곳 - pageController
+
+    7) App.js 에 서버 기본틀 작성
+    const express = require('express');
+
+    // .env 파일을 읽어서 process.env.~ 로 읽어드리게 하는 라이브러리
+    const dotenv = require('dotenv');
+    dotenv.config();
+
+    //서버 설정
+    const app = express();
+    app.set('port', process.env.PORT);
+    //로그 출력 설정
+    const fs = require('fs');
+    const path = require('path');
+
+    //static 파일의 경로 설정
+    app.use(express.static(path.join(__dirname, 'public')));
+
+    // view template(템플릿 엔진: 서버데이터를 html로 출력하기 위한 것) 설정 서버의 데이터를 html과 합쳐서 다시 html로
+    // 변환해주는 라이브러리
+    const nunjucks = require('nunjucks');
+    app.set('view engine', 'html');
+    nunjucks.configure('views', {
+        express: app,
+        watch: true
+    });
+
+    //로그 설정 라이브러리
+    const morgan = require('morgan');
+    const FileStreamRotator = require('file-stream-rotator');
+    const logDirectory = path.join(__dirname, 'log');
+
+    // 로그 디렉토리 생성
+    fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
+
+    // 로그 파일 옵션 설정
+    const accessLogStream = FileStreamRotator.getStream({
+        date_format: 'YYYYMMDD',
+        filename: path.join(logDirectory, 'access-%DATE%.log'),
+        frequency: 'daily',
+        verbose: false
+    });
+
+    // 로그 설정
+    app.use(morgan('combined', {stream: accessLogStream}));
+
+    //출력하는 파일 압축해서 전송
+    const compression = require('compression');
+    app.use(compression());
+
+    //post 방식의 파라미터 읽기, form 형식으로 받아온 데이터 읽기
+    let bodyParser = require('body-parser');
+    app.use(bodyParser.json()); // to support JSON-encoded bodies
+    app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
+        extended: true
+    }));
+
+    //쿠키 설정
+    const cookieParser = require('cookie-parser');
+    app.use(cookieParser(process.env.COOKIE_SECRET));
+
+    //세션 설정
+    const session = require("express-session");
+    let options = {
+        host: process.env.HOST,
+        port: process.env.MYSQLPORT,
+        user: process.env.USERID,
+        password: process.env.PASSWORD,
+        database: process.env.DATABASE
+    };
+
+    const MySQLStore = require('express-mysql-session')(session);
+    app.use(
+        session({secret: process.env.COOKIE_SECRET, resave: false, saveUninitialized: true, store: new MySQLStore(options)})
+    );
+
+    //라우터 설정
+    const pageRouter = require('./routes/page');
+    app.use('/', pageRouter);
+
+    // 404 에러가 발생한 경우 처리
+    app.use((req, res, next) => {
+        const err = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
+        err.status = 404;
+        next(err);
+    });
+
+    // 404에러 이외의 에러가 발생한 경우 처리
+    app.use((err, req, res, next) => {
+        res.locals.message = err.message;
+        res.locals.error = process.env.NODE_ENV !== 'production'
+            ? err
+            : {};
+        res.status(err.status || 500);
+        res.render('error');
+    });
+
+    app.listen(app.get('port'), () => {
+        console.log(app.get('port'), '번 포트에서 대기 중');
+    });
+
+    8) 기본적인 처리
+        => routes 디렉토리에 page.js 파일을 만들고 메인화면, 프로필 화면 그리고 회원가입 화면을 위한 라우팅 코드 작성
