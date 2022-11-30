@@ -1,0 +1,46 @@
+const express = require('express');
+
+const passport = require("passport");
+const bcrypt = require("bcrypt");
+
+const {isLoggedIn, isNotLoggedIn} = require("./middlewares")
+
+const User = require('../models/user');
+
+const router = express.Router();
+
+// 회원 가입 처리
+// 원래 /auth/join 인데 라우팅 할 때 처리 할 때 /auth 추가
+router.post('/join', async(req, res, next) => {
+    // 데이터 찾아오기
+    /* const email = req.body.email;
+    const nick = req.body.nick;
+    const password = req.body.password; */
+
+    // 데이터 찾아오기 - 구조적 분해할당
+    // req.body에서 email, nick, password를 찾아서 대입, 순서는 상관없으나 client에서 넘겨주는 속성이름과 같아야한다.
+    const {email, nick, password} = req.body;
+
+    try{
+        // email 존재 여부 확인
+        const exUser = await User.findOne({where:{email}});
+
+        // 이미 존재하는 이메일
+        if(exUser){
+            // 회원 가입 페이지로 리다이렉트 하는데
+            // error 키에 메시지를 가지고 이동
+            return res.redirect('/join?error=exist')
+        }else {
+            // 비밀번호를 해싱
+            const hash = await bcrypt.hash(password, 12);
+            // 저장
+            await User.create({
+                email, nick, password:hash
+            })
+            return res.redirect('/')
+        }
+    } catch(error){
+        console.error(error);
+        return next(error);
+    }
+});
