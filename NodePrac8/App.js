@@ -72,6 +72,10 @@ app.use(
     session({secret: process.env.COOKIE_SECRET, resave: false, saveUninitialized: true, store: new MySQLStore(options)})
 );
 
+const {sequelize} = require('./models');
+/* sequelize.sync({force:false})
+.then(() => ) */
+
 //라우터 설정
 const pageRouter = require('./routes/page');
 // 이곳에 설정한 URL과 page.js에 설정된 URL조합으로 URL을 결정

@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize')
-module.exports = class 모델이름 extends Sequelize.Model{
+module.exports = class User extends Sequelize.Model{
   static init(sequelize){
     // 테이블에 대한 설정
     return super.init({
@@ -15,7 +15,7 @@ module.exports = class 모델이름 extends Sequelize.Model{
         allowNull:false
       },
       password:{
-        type:Sequelize.STRING(12),
+        type:Sequelize.STRING(128),
         allowNull:true
       },
       provider:{ // 로그인 방법 
@@ -32,7 +32,7 @@ module.exports = class 모델이름 extends Sequelize.Model{
       sequelize,
       timestamps:true,
       underscored:false,
-      modelName:User,
+      modelName:"User",
       tableName:'snsuser',
       paranoid:true,
       charset : 'utf8',

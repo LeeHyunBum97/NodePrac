@@ -561,63 +561,222 @@ Authentication(인증)
         - HashTag와 Post는 N:M 관계
         - User와 User의 관계 N:M -> 한명의 User는 여러명을 팔로잉하거나 팔로우 당할 수 있다.
         
-    => models/index.js
+    => models/User.js
+
     const Sequelize = require('sequelize')
     module.exports = class 모델이름 extends Sequelize.Model{
-    static init(sequelize){
-        // 테이블에 대한 설정
-        return super.init({
-        // 컬럼에 대한 설정
-        // 카카오 로그인 때문에 email, nick, pw에 대한 설정이 조금 다르다.
-        email:{
-            type:Sequelize.STRING(40),
-            allowNull:true,
-            unique:true
-        },
-        nick:{
-            type:Sequelize.STRING(40),
-            allowNull:false
-        },
-        password:{
-            type:Sequelize.STRING(12),
-            allowNull:true
-        },
-        provider:{ // 로그인 방법 
-            type:Sequelize.STRING(10),
-            allowNull:false,
-            defaultValue:'local'
-        },
-        snsId:{
-            type:Sequelize.STRING(50),
-            allowNull:true
+        static init(sequelize){
+            // 테이블에 대한 설정
+            return super.init({
+            // 컬럼에 대한 설정
+            // 카카오 로그인 때문에 email, nick, pw에 대한 설정이 조금 다르다.
+            email:{
+                type:Sequelize.STRING(40),
+                allowNull:true,
+                unique:true
+            },
+            nick:{
+                type:Sequelize.STRING(40),
+                allowNull:false
+            },
+            password:{
+                type:Sequelize.STRING(12),
+                allowNull:true
+            },
+            provider:{ // 로그인 방법 
+                type:Sequelize.STRING(10),
+                allowNull:false,
+                defaultValue:'local'
+            },
+            snsId:{
+                type:Sequelize.STRING(50),
+                allowNull:true
+            }
+            }, {
+            // 테이블에 대한 설정
+            sequelize,
+            timestamps:true,
+            underscored:false,
+            modelName:User,
+            tableName:'snsuser',
+            paranoid:true,
+            charset : 'utf8',
+            collate:'utf8_general_ci'
+            });
+            
         }
-        }, {
-        // 테이블에 대한 설정
-        sequelize,
-        timestamps:true,
-        underscored:false,
-        modelName:User,
-        tableName:'snsuser',
-        paranoid:true,
-        charset : 'utf8',
-        collate:'utf8_general_ci'
-        });
-        
-    }
-    // 관계에 대한 설정
-    static associations(db){
-        db.User.hasMany(db.Post);
-        db.User.belongsToMany(db.User,{
-        foreignKey:'followingId',
-        as : 'Followers',
-        through : 'Follow'
-        });
+        // 관계에 대한 설정
+        static associations(db){
+            db.User.hasMany(db.Post);
+            db.User.belongsToMany(db.User,{
+            foreignKey:'followingId',
+            as : 'Followers',
+            through : 'Follow'
+            });
 
-        db.User.belongsToMany(db.User,{
-        foreignKey:'followingId',
-        as : 'Followings',
-        through : 'Follow'
-        });
-    }
+            db.User.belongsToMany(db.User,{
+            foreignKey:'followingId',
+            as : 'Followings',
+            through : 'Follow'
+            });
+        }
     }
     
+    => models/Post.js
+
+    const Sequelize = require('sequelize')
+    module.exports = class Post extends Sequelize.Model{
+        static init(sequelize){
+            // 테이블에 대한 설정
+            return super.init({
+            // 컬럼에 대한 설정
+            content:{
+                type:Sequelize.STRING(200),
+                allowNull:false,
+            },
+            img:{
+                type:Sequelize.STRING(200),
+                allowNull:true
+            }
+            }, {
+            // 테이블에 대한 설정
+            sequelize,
+            timestamps:true,
+            underscored:false,
+            modelName:Post,
+            tableName:'posts',
+            paranoid:true,
+            charset : 'utf8mb4', // 이모티콘 ㄱㄴ
+            collate:'utf8mb4_general_ci'
+            });
+            
+        }
+        // 관계에 대한 설정
+        static associations(db){
+            // User 와의 관계는 1:N
+            db.Post.belongsTo(db.User);
+
+            // HashTag 와는 N:M
+            // 다대다 관계는 테이블이 생성되는데 through 가 테이블 이름
+            db.Post.belongsToMany(db.HashTag, {through:"PostHashTag"})
+        }
+    }
+
+    => models/HashTag.js
+
+    const Sequelize = require('sequelize')
+    module.exports = class HashTag extends Sequelize.Model{
+        static init(sequelize){
+            // 테이블에 대한 설정
+            return super.init({
+            // 컬럼에 대한 설정
+            title:{
+                type:Sequelize.STRING(15),
+                allowNull:false,
+                unique:true
+            }
+            }, {
+            // 테이블에 대한 설정
+            sequelize,
+            timestamps:true,
+            underscored:false,
+            modelName:HashTag,
+            tableName:'hashtag',
+            paranoid:true,
+            charset : 'utf8mb4', // 이모티콘 ㄱㄴ
+            collate:'utf8mb4_general_ci'
+            });
+            
+        }
+        // 관계에 대한 설정
+        static associations(db){
+            // User 와의 관계는 1:N
+            db.HashTag.belongsToMany(db.Post);
+
+            // HashTag 와는 N:M
+            // 다대다 관계는 테이블이 생성되는데 through 가 테이블 이름
+            db.Post.belongsToMany(db.HashTag, {through:"PostHashTag"})
+        }
+    }
+
+    => models/index.js 에서 내용수정
+
+    const Sequelize = require('sequelize');
+    const env = process.env.NODE_ENV || 'development';
+    const config = require('./config/config.json')[env];
+    const db = {};
+
+    const sequelize = new Sequelize(config.database, config.username, config.password, config)
+
+    db.sequelize = sequelize;
+    db.Sequelize = Sequelize;
+
+    // 모델들 가져오기
+    const User = require("./User");
+    const Post = require("./Post");
+    const HashTag = require("./HashTag");
+
+    db.User = User;
+    db.Post = Post
+    db.HashTag = HashTag;
+
+    // 초기화 작업
+    User.init(sequelize);
+    Post.init(sequelize);
+    HashTag.init(sequelize);
+
+    // 초기화 후 관계 설정 _ 관계설정은 무조건 초기화 이후
+    User.associatie(db);
+    Post.associate(db);
+    HashTag.associate(db);
+
+    module.exports = db;
+
+    => config/config.json 에서 데이터 베이스 접근 정보 수정
+    
+        {
+            "development": {
+                "username": "root",
+                "password": "8236",
+                "database": "adam",
+                "host": "127.0.0.1",
+                "dialect": "mysql"
+            },
+            "test": {
+                "username": "root",
+                "password": "8236",
+                "database": "adam",
+                "host": "127.0.0.1",
+                "dialect": "mysql"
+            },
+            "production": {
+                "username": "root",
+                "password": "8236",
+                "database": "adam",
+                "host": "127.0.0.1",
+                "dialect": "mysql"
+            }
+        }
+
+    => App.js 파일에서 모델과 서버를 연결하는 코드를 추가
+
+    
+
+
+    => 데이터베이스가 존재하지 않는 경우는 아래 명령을 한번 수행
+        npx sequelize-cli db:create
+
+    => 서버를 실행하면 데이터 베이스에 4개 테이블 생성
+        -> snsuser, posts, hashtags, PostHashTag
+
+5. Passport 모듈
+    => Node에서 인증 작업을 도와주는 모듈
+    => 세션이나 쿠키처리를 직접하지 않고 이 모듈의 도움을 받으면 쉽게 구현 가능하다.
+
+    P.S. 인증작업
+        -> 일반적으로 로그인 성공하면 세션 생성후 세션에 아이디나 기타 정보를 저장하고 그 이후 부터는 로그인 확인시 세션 정보가 있는지 확인해서 로그인 여부를 판단한다.
+        -> 로그아웃하면 세션의 정보를 삭제한다.
+        -> Social 로그인 작업을 쉽게 처리할 수 있도록 도와준다
+        -> https://passportjs.org
+        -> passport kakao, naver, google, .. 로 검색하면 샘플을 찾아 볼 수 있다.
+        
