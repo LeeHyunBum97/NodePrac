@@ -46,6 +46,7 @@ Authentication(인증)
          routes 디렉토리 안의 js 파일들은 특정요청에 대한 처리를 수행하는 곳 - pageController
 
     7) App.js 에 서버 기본틀 작성
+    
     const express = require('express');
 
     // .env 파일을 읽어서 process.env.~ 로 읽어드리게 하는 라이브러리
@@ -120,10 +121,6 @@ Authentication(인증)
         session({secret: process.env.COOKIE_SECRET, resave: false, saveUninitialized: true, store: new MySQLStore(options)})
     );
 
-    //라우터 설정
-    const pageRouter = require('./routes/page');
-    app.use('/', pageRouter);
-
     // 404 에러가 발생한 경우 처리
     app.use((req, res, next) => {
         const err = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
@@ -147,3 +144,53 @@ Authentication(인증)
 
     8) 기본적인 처리
         => routes 디렉토리에 page.js 파일을 만들고 메인화면, 프로필 화면 그리고 회원가입 화면을 위한 라우팅 코드 작성
+
+    const express = require("express");
+
+    const router = express.Router();
+
+    // 공통된 처리 - 무조건 수행되는 일
+    router.use((req, res) => {
+        // 로그인한 유저 정보
+        res.locals.user = null;
+
+        // 게시글을 follow하고 되고 있는 개수
+        res.locals.follwCount = 0;
+        res.locals.follwingCount = 0;
+
+        // 개시글을 follow하고 있는 유정들의 목록
+        res.locals.follwerIdList = [];
+
+        next();
+    })
+
+    // 메인 화면
+    router.get('/', (req, res) => {
+        const twits = [];
+
+        // 템플릿 엔진을 이용한 출력
+        // res.render('뷰이름', 데이터);
+        // views 디렉토리의 main.html 로 출력된다.
+        res.render('main', {title:"Node Authentication", twits});
+    });
+
+    // 회원가입
+    router.get('/join', (res, req, next) => {
+        res.render('join', {title : "회원가입 - Node Authentication"})
+    });
+
+    // 프로필 화면 처리
+    router.get('/profile', (res, req, next) => {
+        res.render('join', {title : "나의 정보 - Node Authentication"})
+    });
+
+    module.exports = router;
+
+    9) App.js에 메인화면, 회원가입, 프로필 화면 처리하는 라우팅 파일 포함 시키기
+
+        => 일반적인 서버 설정이 끝난뒤에 작성하는 것을 권장한다.
+
+    //라우터 설정
+    const pageRouter = require('./routes/page');
+    // 이곳에 설정한 URL과 page.js에 설정된 URL조합으로 URL을 결정
+    app.use('/', pageRouter);
