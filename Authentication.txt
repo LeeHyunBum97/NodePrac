@@ -1014,5 +1014,6 @@ Authentication(인증)
     }
 
     8) App.js에서 라우터 설정 영역에 auth.js로 받을 요청 처리할 코드 작성
+    
     const authRouter = require('./routes/auth');
     app.use('/auth', authRouter);
