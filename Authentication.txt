@@ -46,7 +46,7 @@ Authentication(인증)
          routes 디렉토리 안의 js 파일들은 특정요청에 대한 처리를 수행하는 곳 - pageController
 
     7) App.js 에 서버 기본틀 작성
-    
+
     const express = require('express');
 
     // .env 파일을 읽어서 process.env.~ 로 읽어드리게 하는 라이브러리
@@ -194,3 +194,430 @@ Authentication(인증)
     const pageRouter = require('./routes/page');
     // 이곳에 설정한 URL과 page.js에 설정된 URL조합으로 URL을 결정
     app.use('/', pageRouter);
+
+    10) 공통된 레이아웃을 위한 내용을 views 디렉토리에 layout.html을 작성
+
+    <!DOCTYPE html>
+    <html>
+        <head>
+            <meta charset="UTF-8">
+            <!-- {{}} 해당 부분이 데이터 출력하는 부분 -->
+            <title>{{title}}</title>
+            <!-- 모바일 페이지 만들 때 content="width=device-width, user-scalable=no"와 같은 속성 사용 -->
+            <meta name="viewport" content="width=device-width, user-scalable=no">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <link rel="stylesheet" href="/main.css">
+        </head>
+        <body>
+            <div class="container">
+                <div class="profile-wrap">
+                    <div class="profile">
+                        <!-- 로그인 되어있으면 -->
+                        {% if user and user.id %}
+                            <div class="user-name">{{'안녕하세요! ' + user.nick + '님'}}</div>
+                            <div class="half">
+                                <div>팔로잉</div>
+                                <div class="count following-count">{{followingCount}}</div>
+                            </div>
+                            <div class="half">
+                                <div>팔로워</div>
+                                <div class="count follower-count">{{followerCount}}</div>
+                            </div>
+                            <input id="my-id" type="hidden" value="{{user.id}}">
+                            <a id="my-profile" href="/profile" class="btn">내 프로필</a>
+                            <a id="logout" href="/auth/logout" class="btn">로그아웃</a>
+                            
+                        <!-- 로그인 되어 있지 않다면 -->
+                        {% else %}
+                            <form id="login-form" action="/auth/login" method="post">
+                                <div class="input-group">
+                                    <label for="email">이메일</label>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        required="required"
+                                        autofocus="autofocus">
+                                </div>
+                                <div class="input-group">
+                                    <label for="password">비밀번호</label>
+                                    <input id="password" type="password" name="password" required="required">
+                                </div>
+                                <a id="join" href="/join" class="btn">회원가입</a>
+                                <button id="login" type="submit" class="btn">로그인</button>
+                                <a id="kakao" href="/auth/kakao" class="btn">카카오톡</a>
+                            </form>
+                        {% endif %}
+                    </div>
+                    <footer>
+                        Made by&nbsp;
+                        <a href="https://ggangpae1.tistory.com/" target="_blank">ADAM</a>
+                    </footer>
+                </div>
+                {% block content %}{% endblock %}
+            </div>
+            <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+            <script>
+                window.onload = () => {
+                    if (new URL(location.href).searchParams.get('loginError')) {
+                        alert(new URL(location.href).searchParams.get('loginError'));
+                    }
+                };
+            </script>
+            {% block script %}{% endblock %}
+        </body>
+    </html>
+
+    11) main 화면을 위한 내용을 views 디렉토리에 main.html에 작성한다.
+    {% extends 'layout.html' %}
+    {% block content %}
+        <div class="timeline">
+            {% if user %}
+                <div>
+                    <form id="twit-form" action="/post" method="post" enctype="multipart/formdata">
+                        <div class="input-group">
+                            <textarea id="twit" name="content" maxlength="140"></textarea>
+                        </div>
+                        <div class="img-preview">
+                            <img id="img-preview" src="" style="display: none;" width="250" alt="미리보기">
+                            <input id="img-url" type="hidden" name="url">
+                        </div>
+                        <div>
+                            <label id="img-label" for="img">사진 업로드</label>
+                            <input id="img" type="file" accept="image/*">
+                            <button id="twit-btn" type="submit" class="btn">게시</button>
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
+            <div class="twits">
+                {% for twit in twits %}
+                    <div class="twit">
+                        <input type="hidden" value="{{twit.User.id}}" class="twit-user-id">
+                        <input type="hidden" value="{{twit.id}}" class="twit-id">
+                        <div class="twit-author">{{twit.User.nick}}</div>
+                        {% if not followerIdList.includes(twit.User.id)and twit.User.id !== user.id %}
+                            <button class="twit-follow">팔로우하기</button>
+                        {% endif %}
+                        <div class="twit-content">{{twit.content}}</div>
+                        {% if twit.img %}
+                            <div class="twit-img"><img src="{{twit.img}}" alt="섬네일"></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endblock %}
+    {% block script %}
+        <script>
+            if (document.getElementById('img')) {
+                document
+                    .getElementById('img')
+                    .addEventListener('change', function (e) {
+                        const formData = new FormData();
+                        console.log(this, this.files);
+                        formData.append('img', this.files[0]);
+                        axios
+                            .post('/post/img', formData)
+                            .then((res) => {
+                                document
+                                    .getElementById('img-url')
+                                    .value = res.data.url;
+                                document
+                                    .getElementById('img-preview')
+                                    .src = res.data.url;
+                                document
+                                    .getElementById('img-preview')
+                                    .style
+                                    .display = 'inline';
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                            });
+                    });
+            }
+            document
+                .querySelectorAll('.twit-follow')
+                .forEach(function (tag) {
+                    tag.addEventListener('click', function () {
+                        const myId = document.querySelector('#my-id');
+                        if (myId) {
+                            const userId = tag
+                                .parentNode
+                                .querySelector('.twit-user-id')
+                                .value;
+                            if (userId !== myId.value) {
+                                if (confirm('팔로잉하시겠습니까?')) {
+                                    axios
+                                        .post(`/user/${userId}/follow`)
+                                        .then(() => {
+                                            location.reload();
+                                        })
+                                        .catch((err) => {
+                                            console.error(err);
+                                        });
+                                }
+                            }
+                        }
+                    });
+                });
+        </script>
+    {% endblock %}
+
+    12) 나의 정보를 위한 출력 내용을 views 디렉토리에 저장
+    {% extends 'layout.html' %}
+    {% block content %}
+        <div class="timeline">
+            <div class="followings half">
+                <h2>팔로잉 목록</h2>
+                {% if user.Followings %}
+                    {% for following in user.Followings %}
+                        <div>{{following.nick}}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="followers half">
+                <h2>팔로워 목록</h2>
+                {% if user.Followers %}
+                    {% for follower in user.Followers %}
+                        <div>{{follower.nick}}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    {% endblock %}
+
+    13) 회원가입을 출력하기 위한 내용을 veiws 디텍토리 join.t에 저장
+    {% block script %}
+    <script>
+            window.onload = () => {
+                if (new URL(location.href).searchParams.get('error')) {
+                    alert('이미 존재하는 이메일입니다.');
+                }
+            };
+        </script>
+    {% endblock %}
+
+    14) 에러가 발생한 경우 출력할 내용을 veiews 디렉토리의 error.html에 저장
+    {% extends 'layout.html' %}
+    {% block content %}
+    <h1>{{message}}</h1>
+    <h2>{{error.status}}</h2>
+    <pre>{{error.stack}}</pre>
+    {% endblock %}
+
+    15) 스타일 관련한 내용을 public 디렉토리에 main.css에 저장
+    * {
+            box-sizing: border-box;
+        }
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0 5px;
+            text-decoration: none;
+            cursor: pointer;
+            border-radius: 4px;
+            background: white;
+            border: 1px solid silver;
+            color: crimson;
+            height: 37px;
+            line-height: 37px;
+            vertical-align: top;
+            font-size: 12px;
+        }
+
+        input[type='text'],
+        input[type='email'],
+        input[type='password'],
+        textarea {
+            border-radius: 4px;
+            height: 37px;
+            padding: 10px;
+            border: 1px solid silver;
+        }
+        .container {
+            width: 100%;
+            height: 100%;
+        }
+        @media screen and (min-width: 800px) {
+            .container {
+                width: 800px;
+                margin: 0 auto;
+            }
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            width: 25%;
+            display: inline-block;
+        }
+        .input-group input {
+            width: 70%;
+        }
+        .half {
+            float: left;
+            width: 50%;
+            margin: 10px 0;
+        }
+        #join {
+            float: right;
+        }
+        .profile-wrap {
+            width: 100%;
+            display: inline-block;
+            vertical-align: top;
+            margin: 10px 0;
+        }
+        @media screen and (min-width: 800px) {
+            .profile-wrap {
+                width: 290px;
+                margin-bottom: 0;
+            }
+        }
+        .profile {
+            text-align: left;
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 4px;
+            border: 1px solid silver;
+            background: lightcoral;
+        }
+        .user-name {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .count {
+            font-weight: bold;
+            color: crimson;
+            font-size: 18px;
+        }
+        .timeline {
+            margin-top: 10px;
+            width: 100%;
+            display: inline-block;
+            border-radius: 4px;
+            vertical-align: top;
+        }
+        @media screen and (min-width: 800px) {
+            .timeline {
+                width: 500px;
+            }
+        }
+        #twit-form {
+            border-bottom: 1px solid silver;
+            padding: 10px;
+            background: lightcoral;
+            overflow: hidden;
+        }
+        #img-preview {
+            max-width: 100%;
+        }
+        #img-label {
+            float: left;
+            cursor: pointer;
+            border-radius: 4px;
+            border: 1px solid crimson;
+            padding: 0 10px;
+            color: white;
+            font-size: 12px;
+            height: 37px;
+            line-height: 37px;
+        }
+        #img {
+            display: none;
+        }
+
+    => 실행후 확인
+
+4. 데이터 베이스 작업
+    1) 테이블 구조
+        => 회원 테이블
+        - 이메일
+        - 닉네임
+        - 패스워드
+        - 로그인 방법
+            -> 직접 로그인 했는지 아니면 카카오 로그인 했는지 여부를 저장
+        - 카카오 아이디
+
+        - 생성시간
+        - 수정시간
+        - 삭제시간
+
+        => POST 테이블
+            - 게시글 내용
+            - 이미지 파일의 경로
+        
+        => HashTag 테이블
+        - 태그이름
+
+        => 관계
+        - User와 Post 는 1:N 관계 
+        - HashTag와 Post는 N:M 관계
+        - User와 User의 관계 N:M -> 한명의 User는 여러명을 팔로잉하거나 팔로우 당할 수 있다.
+        
+    => models/index.js
+    const Sequelize = require('sequelize')
+    module.exports = class 모델이름 extends Sequelize.Model{
+    static init(sequelize){
+        // 테이블에 대한 설정
+        return super.init({
+        // 컬럼에 대한 설정
+        // 카카오 로그인 때문에 email, nick, pw에 대한 설정이 조금 다르다.
+        email:{
+            type:Sequelize.STRING(40),
+            allowNull:true,
+            unique:true
+        },
+        nick:{
+            type:Sequelize.STRING(40),
+            allowNull:false
+        },
+        password:{
+            type:Sequelize.STRING(12),
+            allowNull:true
+        },
+        provider:{ // 로그인 방법 
+            type:Sequelize.STRING(10),
+            allowNull:false,
+            defaultValue:'local'
+        },
+        snsId:{
+            type:Sequelize.STRING(50),
+            allowNull:true
+        }
+        }, {
+        // 테이블에 대한 설정
+        sequelize,
+        timestamps:true,
+        underscored:false,
+        modelName:User,
+        tableName:'snsuser',
+        paranoid:true,
+        charset : 'utf8',
+        collate:'utf8_general_ci'
+        });
+        
+    }
+    // 관계에 대한 설정
+    static associations(db){
+        db.User.hasMany(db.Post);
+        db.User.belongsToMany(db.User,{
+        foreignKey:'followingId',
+        as : 'Followers',
+        through : 'Follow'
+        });
+
+        db.User.belongsToMany(db.User,{
+        foreignKey:'followingId',
+        as : 'Followings',
+        through : 'Follow'
+        });
+    }
+    }
+    
