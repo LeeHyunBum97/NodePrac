@@ -1,31 +1,28 @@
 const express = require('express');
 
-// .env 파일을 읽어서 process.env.~ 로 읽어드리게 하는 라이브러리
 const dotenv = require('dotenv');
 dotenv.config();
 
 //서버 설정
 const app = express();
 app.set('port', process.env.PORT);
-//로그 출력 설정
+
+//로그 출력을 위한 파일 과 경로를 위한 모듈 설정
 const fs = require('fs');
 const path = require('path');
-
 //static 파일의 경로 설정
 app.use(express.static(path.join(__dirname, 'public')));
 
-// view template(템플릿 엔진: 서버데이터를 html로 출력하기 위한 것) 설정 서버의 데이터를 html과 합쳐서 다시 html로
-// 변환해주는 라이브러리
+//view template 설정
 const nunjucks = require('nunjucks');
 app.set('view engine', 'html');
 nunjucks.configure('views', {
     express: app,
     watch: true
 });
-
-//로그 설정 라이브러리
 const morgan = require('morgan');
 const FileStreamRotator = require('file-stream-rotator');
+
 const logDirectory = path.join(__dirname, 'log');
 
 // 로그 디렉토리 생성
@@ -46,8 +43,8 @@ app.use(morgan('combined', {stream: accessLogStream}));
 const compression = require('compression');
 app.use(compression());
 
-//post 방식의 파라미터 읽기, form 형식으로 받아온 데이터 읽기
-let bodyParser = require('body-parser');
+//post 방식의 파라미터 읽기
+var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
     extended: true
@@ -59,7 +56,7 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 
 //세션 설정
 const session = require("express-session");
-let options = {
+var options = {
     host: process.env.HOST,
     port: process.env.MYSQLPORT,
     user: process.env.USERID,
@@ -68,48 +65,45 @@ let options = {
 };
 
 const MySQLStore = require('express-mysql-session')(session);
+
 app.use(
     session({secret: process.env.COOKIE_SECRET, resave: false, saveUninitialized: true, store: new MySQLStore(options)})
 );
-
 const {sequelize} = require('./models');
-sequelize.sync({force:false})
-.then(()=>{
-console.log('데이터베이스 연결 성공');
-})
-.catch((err)=>{
-console.error(err);
-})
 
-const passport = require("passport");
-const passportConfig = require("./passport")
+sequelize
+    .sync({force: false})
+    .then(() => {
+        console.log('데이터베이스 연결 성공');
+    })
+    .catch((err) => {
+        console.error(err);
+    });
+
+const passport = require('passport');
+const passportConfig = require('./passport');
+
 passportConfig();
+
 app.use(passport.initialize());
-// 세션 기능은 passport 모듈이 알아서 사용
 app.use(passport.session());
 
 //라우터 설정
-const pageRouter = require('./routes/page');
-// 이곳에 설정한 URL과 page.js에 설정된 URL조합으로 URL을 결정
-app.use('/', pageRouter);
+const indexRouter = require('./routes'); // index.js는 생략 가능
+app.use('/', indexRouter);
 
 const authRouter = require('./routes/auth');
 app.use('/auth', authRouter);
 
-const postRouter = require('./routes/post');
-app.use('/post', postRouter);
-
-const userRouter = require('./routes/users');
-app.use('/user', userRouter);
-
-// 404 에러가 발생한 경우 처리
+app.use('/img', express.static(path.join(__dirname, 'uploads')));
+//에러가 발생한 경우 처리
 app.use((req, res, next) => {
     const err = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
     err.status = 404;
     next(err);
 });
 
-// 404에러 이외의 에러가 발생한 경우 처리
+//에러가 발생한 경우 처리, req, res 앞에 err가 있다면 error를 처리하는 구문이다.
 app.use((err, req, res, next) => {
     res.locals.message = err.message;
     res.locals.error = process.env.NODE_ENV !== 'production'

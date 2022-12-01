@@ -68,6 +68,7 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
             return res. redirect('/');
         })
     })(req, res, next);
+    console.log(req.user)
 });
 
 // 로그아웃 처리
@@ -81,6 +82,18 @@ router.get('/logout', isLoggedIn, (req, res, next) => {
         req.session.destroy();
         res.redirect('/');
     })
+});
+
+// 카카오 로그인을 눌렀을 때 처리
+router.get('/kakao', passport.authenticate('kakao')); // 카카오 앱으로 이동
+
+// 카카오 로그인 실패했을 때와 성공했을 때 처리 처리
+router.get('/kakao/callback/', passport.authenticate('kakao', {
+    // 실패하면 메인으로
+    failureRedirect:'/'
+}), (req, res) => {
+    // 성공했을 때도 메인으로
+    res.redirect('/')
 });
 
 module.exports = router;
