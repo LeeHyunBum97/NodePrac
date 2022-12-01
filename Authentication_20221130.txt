@@ -1286,6 +1286,144 @@ Authentication(인증)
 
 9. 팔로우 처리
 
+    1) 팔로우 관련 처리를 위한 내용을 /routes/users.js 파일을 생성하고 작성한다.
+        
+        const express = require('express');
+        const User = require('../models/user');
+        const {isLoggedIn} = require('./middlewares');
+
+        const router = express.Router();
+
+        router.post('/:id/follow', isLoggedIn, async(req, res, next) => {
+            // 네트워크, DB 작업은 비동기로 수행되기 때문에 async-await 혹은 promise나 FetchAPI
+            try{
+                const user = await User.findOne({where : {id:req.user.id}});
+                if(user) {
+                    // 팔로우 추가(팔로잉)
+                    // 아이디를 10진수로 전환해서 팔로우 목록에 추가
+                    await user.addFollowing(parseInt(req.params.id, 10));
+                }else{
+                    res.status(404).send('no user');
+                }
+            }catch(error){
+                console.log(error);
+                next(error)
+            }
+        });
+
+module.exports = router;
+
+    2) /passport/index.js 에서 파일에서 로그인 할 때 팔로우 정보를 가져오도록 passport.deserizalizerUser 메서드를 수정한다.
+        // 넘어온 id에 해당하는 데이터가 있으면 데이터베이스에서 찾아서 세션에 저장
+        passport.deserializeUser((id, done) => {
+            User.findOne({where:{id}, 
+                include:[{
+                    model: User, 
+                    attributes:['id', 'nick'], 
+                    as : 'Followers'},
+                {
+                    model: User,
+                    attributes : ['id', 'nick'],
+                    as : 'Followings'
+                } ]})
+            .then(user => done(null, user))
+            .catch(err => done(err));
+        });
+
+    3) routes/page.js 파일에 유저정보를 초기화와 hashtag를 가지고 오는 요청을 하는 미들웨어 부분을 수정한다.
+
+        const express = require('express');
+
+        // middleware 에 작성한 isLoggedIn, isNotLoggedIn 불러오기
+        const {isLoggedIn, isNotLoggedIn} = require('./middlewares');
+        const{Post, User, Hashtag} = require('../models');
+
+        const router = express.Router();
+
+        // 공통된 처리 - 무조건 수행
+        router.use((req, res, next) => {
+            // 로그인한 유저 정보
+            // 유저 정보를 res.locals.user에 저장
+            res.locals.user = req.user;
+            // 게시글을 follow하고 되고 있는 개수
+            res.locals.followCount = req.user ? req.user.Follower.length : 0;
+            res.locals.followingCount = req.user ? user.Followings.length : 0;
+            // 게시글을 follow 하고 이는 유저들의 목록
+            res.locals.followIdList = req.user ? user.Followings.map(f=>f.id):[];
+            next();
+        });
+
+        router.get('/hashtag', async(req, res, next) => {
+            // 파라미터 읽어오기
+            const query = req.query.hashtag;
+            if(!query){
+                return res.redirect('/');
+            }
+            try{
+                const hashtag = await Hashtag.findOne({where:{title:query}});
+                let posts = []
+                if(hashtag){
+                    posts = await Hashtag.getPosts({include:[{model:User}]});
+                }
+                return res.render('main', {title:`${query} | NodeAuthentication`, twits:posts})
+            }catch(error){
+                console.log(error);
+                return next(error);
+            }
+        })
+
+
+        // 메인 화면
+        router.get('/', async (req, res, next) => {
+            try {
+                const posts = await Post.findAll({
+                    include: {
+                        model: User,
+                        attributes: ['id', 'nick']
+                    },
+                    order: [['createdAt', 'DESC']]
+                });
+
+                // 템플릿 엔진을 이용한 출력 views 디렉토리의 main.html로 출력
+                res.render('main', {
+                    title: "Node Authentication",
+                    twits: posts
+                });
+
+            } catch (error) {
+                console.log(error);
+                next(error);
+            }
+        })
+
+        /* //메인화면
+        router.get('/',(req, res, next) => {
+            const twits = [];
+            // 템플릿 엔진을 이용한 출력
+            // views 디렉토리의 main.html로 출력
+            res.render('main', {title:"Node Authentication", twits});
+        }); */
+
+        //회원가입 - 로그인이 되어있지 않은 경우에만 수행
+        router.get('/join', isNotLoggedIn, (req, res, next) => {
+            res.render('join', {title: "회원가입 - Node Authencation"});
+        });
+
+        //프로필 화면 처리 - 로그인 되어 있는 경우에만 수행
+        router.get('/profile', isLoggedIn, (req, res, next) => {
+            res.render('profile', {title: "나의 정보 - Node Authencation"});
+        });
+
+        module.exports = router;
+
+    4) App.js 파일에 users 라우팅 파일을 사용할 수 있도록 추가해 준다.
+        
+        const userRouter = require('./routes/users');
+        app.use('/user', userRouter);
+
+    
+
+
 
 P.S Cookie & Session 
     => http와 https는 연결형 서비스이기는 하지만 요청(Request)을 전송하고 응당(Response)을 하면 접속이 해제된다.
@@ -1305,4 +1443,3 @@ P.S Cookie & Session
     => session을 메모리에 저장하면 서버가 종료되었다가 다시 실행되면 모든 세션이 소멸된다.
     => 메모리를 효율적으로 사용하고 종료되었다가 다시 부팅이 되었을 때도 특정 정보를 기억하고자 하면 플랫파일(.csv, txt,..)이나 데이터베이스를 이용한다.
 
-P

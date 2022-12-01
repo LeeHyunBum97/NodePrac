@@ -68,6 +68,7 @@ router.post('/login', isNotLoggedIn, (req, res, next) => {
             return res. redirect('/');
         })
     })(req, res, next);
+    console.log(req.user)
 });
 
 // 로그아웃 처리

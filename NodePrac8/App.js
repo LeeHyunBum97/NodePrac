@@ -99,6 +99,9 @@ app.use('/auth', authRouter);
 const postRouter = require('./routes/post');
 app.use('/post', postRouter);
 
+const userRouter = require('./routes/users');
+app.use('/user', userRouter);
+
 // 404 에러가 발생한 경우 처리
 app.use((req, res, next) => {
     const err = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
