@@ -1,5 +1,12 @@
 const passport = require('passport');
+
+// 로컬 로그인
 const local = require('./localStrategy');
+
+// 카카오 로그인
+const kakako = require('./kakaoStrategy');
+
+
 const User = require('../models/user');
 
 
@@ -16,4 +23,5 @@ module.exports = () => {
         .catch(err => done(err));
     });
     local();
+    kakako();
 }

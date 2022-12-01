@@ -1019,6 +1019,9 @@ Authentication(인증)
     app.use('/auth', authRouter);
 
 7. 카카오 로그인 구현
+    => 통합로그인 구현시 사용하는 포털의 로그인 형식에 담긴 정보만으로 제공하고자 하는 서비스를 모두 구현할 수 있다면 그대로 사용하지만,
+    => 그렇지 않은 경우 독립적인 제공 사이트의 회원 가입과 로그인을 제공해서 그 정보를 확보한다
+
     1) 사용하는 모듈 : passport-kakao
         -> npm install passport-kakao
         -> document : https://www.passportjs.org/packages/passport-kakao/
@@ -1034,4 +1037,114 @@ Authentication(인증)
 
         => .env에 복사한 RestAPI 키 대입
 
+    3) /passport/index.js 에 kakao 로그인에 사용될 카카오 로그인 전략 파일 포함 하는 코드 작성
+        const passport = require('passport');
+
+        // 로컬 로그인
+        const local = require('./localStrategy');
+
+        // 카카오 로그인
+        const kakako = require('./kakaoStrategy');
+
+
+        const User = require('../models/user');
+
+
+        module.exports = () => {
+            // 로그인 성공했을 때 정보를 deserializeUser 함수에게 넘기는 함수
+            passport.serializeUser((user, done) => {
+                done(null, user.id);
+            });
+
+            // 넘어온 id에 해당하는 데이터가 있으면 데이터베이스에서 찾아서 세션에 저장
+            passport.deserializeUser((id, done) => {
+                User.findOne({where:{id}})
+                .then(user => done(null, user))
+                .catch(err => done(err));
+            });
+            local();
+            kakako();
+        }
+
+    4) /passport 에 카카오 로그인 전략을 담당 하는 kakaoStrategy.js 파일 생성
+    const passport = require("passport");
+    const kakaoStrategy = require("passport-kakao").Strategy;
+
+    // 유저정보 가져오기
+    const User = require('../models/user');
+
+    // 카카오 로그인 
+    module.exports = () =>{
+        passport.use(new kakaoStrategy({
+            clientID: process.env.KAKAO_ID,
+
+            // kakaoDveloper의 카카오 로그인의 리다이렉트 URL 확인해서 작성
+            callbackURL: '/auth/kakao/callback'
+        }, async(accessToken, refreshToken, profile, done) => {
+            // kakaoDveloper의 카카오 로그인의 동의 항목에서 동의한 정보들을 profile에 가져온다.
+            console.log(profile);
+
+            try{
+                // 이전에 로그인 한 적이 있는지 찾기 위해서 카카오 아이디와 provider가 kako로 되어있는 데이터가 있는지 조회
+                const exUser = await (User.findOne({
+                    // provider는 model의 user 테이블이 갖고있는 로그인 방식 컬럼을 선택하는 것
+                    where:{snsId:profile.id, provider:'kakao'}
+                }));
+
+                // 이전에 kakao 로 로그인 한적이 있으면
+                if(exUser) {
+                    done(null, exUser);
+                    // 그냥 넘어간다.
+                }else{
+                    // 이전에 로그인 한 적이 없으면 데이터를 저장한다.
+                    const newUser = await User.create({
+                        email:profile._json && profile._json.kaccount_email,
+                        nick: profile.displayName,
+                        snsId:profile.id,
+                        provider: 'kakao'
+                    });
+                    done(null, newUser); // 저장하고 넘기기
+                }
+            }catch(error){
+                console.log(error);
+                done(error);
+            }
+        }));
+    }
+
+    5) /routes/auth.js 에 카카오 로그인을 눌렀을 때 처리하는 코드 추가
+        // 카카오 로그인을 눌렀을 때 처리
+        router.get('/kakao', passport.authenticate('kakao')); // 카카오 앱으로 이동
+
+        // 카카오 로그인 실패했을 때와 성공했을 때 처리 처리
+        router.get('/kakao/callback/', passport.authenticate('kakao', {
+            // 실패하면 메인으로
+            failureRedirect:'/'
+        }), (req, res) => {
+            // 성공했을 때도 메인으로
+            res.redirect('/')
+        });
+
     
+8. 게시글 구현
+    
+
+P.S Cookie & Session 
+    => http와 https는 연결형 서비스이기는 하지만 요청(Request)을 전송하고 응당(Response)을 하면 접속이 해제된다.
+    => 이렇게 되면 이전에 무엇을 했는지를 기억할 수 없기 때문에 이전에 수행한 내용이나 상태를 연속해서 사용하고자 하면 이 경우에는 이 정보를 저장해야 한다.
+
+    => 그 정보를 클라이언트에 저장하고 서버에 전송하는 방법이 있고 다른 하나는 서버에 바로 저장하는 방법이 있다.
+    => 하지만 이 정보를 클라이언트에서 브라우저 [검사]-[application]에서 조작이 가능하다.
+    => 클라이언트의 저장소는 쿠키와 로컬 저장소(로컬 스토리지, 세션 스토리지, Web SQL, Index DB)가 있는데 쿠키에 저장하면 서버에 매번 자동으로 전송되지만 로컬저장소의 내용은 자동으로 전송되지 않는다.
+
+    => 서버에 바로 저장하는 방법은 세션에 저장한다고 한다.
+    => Request 객체 안에는 session 이라고 하는 속성이 있어서 이 속성안에 저장하는 것이다.
+    => session 이 만들어질 때는 하나의 키를 생성해서 클라이언트의 쿠키에 전송한다.
+    => 세션의 키를 확인하면 어떤 클라이언트의 세션인지 확인이 가능하며 이 세션의 키를 token 이라고도 한다.
+    => Session은 기본적으로 서버의 메모리에 저장된다.
+    => 클라이언트의 접속 개수가 많아지면 session의 개수도 많아지며 session의 개수가 많아지면 서버가 사용할 수 있는 메모리의 양이 줄어들기 때문에 성능이 저하 될 수 있다.
+    => 새로고침하게 되면 세션도 새롭게 만들어진다.(세션이 새로 만들어지면 세션의 키도 새로 발급되어 처리 우선순위가 뒤로 밀려난다.)
+    => session을 메모리에 저장하면 서버가 종료되었다가 다시 실행되면 모든 세션이 소멸된다.
+    => 메모리를 효율적으로 사용하고 종료되었다가 다시 부팅이 되었을 때도 특정 정보를 기억하고자 하면 플랫파일(.csv, txt,..)이나 데이터베이스를 이용한다.
+
+P
