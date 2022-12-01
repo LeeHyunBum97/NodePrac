@@ -40,8 +40,249 @@ API SERVER
 
 3. API Server를 만들기 위한 기본 설정
 
-1) 프로젝트 생성
+    1) 프로젝트 생성
+        => 만들고 npm init로 node프로젝트 초기화.
 
-2) 필요한 패키지 설치
 
-3) package.json 수정
+    2) 필요한 패키지 설치
+
+        => npm install express dotenv compression morgan file-stream-rotator multer cookie-parser express-session express-mysql-session mysql2 sequelize sequelize-cli nunjucks passport passport-kakao passport-local bcrypt uuid
+            
+            -> bcrypt는 복호화가 불가능한 암호화를 위한 모듈로 이 모듈이 있다는 뜻은 비밀번호를 저장할 목적을 가지고 있다고 생각하면 된다.
+            -> uuid는 랜덤한 문자열을 생성하기 위한 모듈로 이 모듈이 있다는 것은 키를 발급할 목적을 가지고 있다고 생각하면 된다.
+
+        => npm install --save-dev nodemon
+
+            -> --save-dev 로 설치된 패키지나 라이브러리는 배포할 때는 패키지에 포함되지 않는다.
+
+    3) package.json 수정
+        
+        "scripts": {
+        "start": "nodemon App.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+
+    4)
+
+    5)
+
+    6) 프로젝트 화면에 출력될
+
+    7) 에러가 발생했을 때 화면에 출력될 파일을 views 디렉토리에 생성하고 작성. error.html
+        
+        <h1>{{message}}</h1>
+        <h2>{{error.status}}</h2>
+        <pre>{{error.stack}}</pre>
+    
+        => message는 개발자가 전달하는 문자열이다.
+        => error.status 는 에러의 코드를 의미한다.
+        => error.stact(stack trace)는 에러가 발생하면 에러가 발생한 부분에서 호출되는 함수를 역순으로 출력한다.
+            -> 에러를 해결할 때는 맨 위에서 부터 아래로 내려오면서 자신이 작성한 코드가 있는 부분을 찾아야 한다.
+            -> 그 부분을 수정하는데 그 부분에서 다른 코드를 호출하면 순서대로 역추적하여 해결해야 한다.
+
+    8) App.js 파일 작성 후 설정 정상인지 확인
+
+        const express = require('express');
+
+        const dotenv = require('dotenv');
+        dotenv.config();
+
+        //서버 설정
+        const app = express();
+        app.set('port', process.env.PORT);
+
+        //로그 출력을 위한 파일 과 경로를 위한 모듈 설정
+        const fs = require('fs');
+        const path = require('path');
+        //static 파일의 경로 설정
+        app.use(express.static(path.join(__dirname, 'public')));
+
+        //view template 설정
+        const nunjucks = require('nunjucks');
+        app.set('view engine', 'html');
+        nunjucks.configure('views', {
+            express: app,
+            watch: true
+        });
+        const morgan = require('morgan');
+        const FileStreamRotator = require('file-stream-rotator');
+
+        const logDirectory = path.join(__dirname, 'log');
+
+        // 로그 디렉토리 생성
+        fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
+
+        // 로그 파일 옵션 설정
+        const accessLogStream = FileStreamRotator.getStream({
+            date_format: 'YYYYMMDD',
+            filename: path.join(logDirectory, 'access-%DATE%.log'),
+            frequency: 'daily',
+            verbose: false
+        });
+
+        // 로그 설정
+        app.use(morgan('combined', {stream: accessLogStream}));
+
+        //출력하는 파일 압축해서 전송
+        const compression = require('compression');
+        app.use(compression());
+
+        //post 방식의 파라미터 읽기
+        var bodyParser = require('body-parser');
+        app.use(bodyParser.json()); // to support JSON-encoded bodies
+        app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
+            extended: true
+        }));
+
+        //쿠키 설정
+        const cookieParser = require('cookie-parser');
+        app.use(cookieParser(process.env.COOKIE_SECRET));
+
+        //세션 설정
+        const session = require("express-session");
+        var options = {
+            host: process.env.HOST,
+            port: process.env.MYSQLPORT,
+            user: process.env.USERID,
+            password: process.env.PASSWORD,
+            database: process.env.DATABASE
+        };
+
+        const MySQLStore = require('express-mysql-session')(session);
+
+        app.use(
+            session({secret: process.env.COOKIE_SECRET, resave: false, saveUninitialized: true, store: new MySQLStore(options)})
+        );
+        const {sequelize} = require('./models');
+
+        sequelize
+            .sync({force: false})
+            .then(() => {
+                console.log('데이터베이스 연결 성공');
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+
+        const passport = require('passport');
+        const passportConfig = require('./passport');
+
+        passportConfig();
+
+        app.use(passport.initialize());
+        app.use(passport.session());
+
+        const authRouter = require('./routes/auth');
+        app.use('/auth', authRouter);
+
+        app.use('/img', express.static(path.join(__dirname, 'uploads')));
+        //에러가 발생한 경우 처리
+        app.use((req, res, next) => {
+            const err = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
+            err.status = 404;
+            next(err);
+        });
+
+        //에러가 발생한 경우 처리, req, res 앞에 err가 있다면 error를 처리하는 구문이다.
+        app.use((err, req, res, next) => {
+            res.locals.message = err.message;
+            res.locals.error = process.env.NODE_ENV !== 'production'
+                ? err
+                : {};
+            res.status(err.status || 500);
+            res.render('error');
+        });
+
+        app.listen(app.get('port'), () => {
+            console.log(app.get('port'), '번 포트에서 대기 중');
+        });
+
+4. 도메인을 등록해서 등록한 도메인에서만 API 요청이 이뤄지도록 도메인과 키를 생성해서 저장
+
+    P.S. free, Premium 과 같이 구분하고자 하는 경우에 자료형 선택
+        => boolean
+            -> true와 false를 이용해서 두가지만 구분해서 사용 가능하다.
+        
+        => int
+            -> free와 premium 을 0과 1에 추가된 자료구분이 있다면, 2, 3, 등을 추가해서 사용가능하다,
+
+        => string
+            -> free와 premium을 문자열로 저장해서 구분 가능하다.
+
+        => ** ENUM(Enum) **
+            -> 정해진 데이터만 삽입이 가능하다.
+            -> type varchar(100) (check type in('free', 'premium'))과 같이 DB에 check 제약조건으로 설정한 다음에 JS나 Java에서 ENUM으로 처리
+            -> 무엇인가를 제한하고자 할 때 ENUM 사용하는 것을 굉장히 높게 평가한다.
+            -> 마찬가지로 const나 final 과 같은 것도 변수나 함수 기타 등을 용도에 맞게 사용할 것이라는 것을 보여주는 것으로 높게 평가된다.
+
+
+    1) models 디렉토리에 위의 정보(host-client URL, client Secret Key, type - Free, Premium)를 저장할 모델 domain.js를 생성
+
+        const Sequelize = require('sequelize');
+
+        module.exports = class Post extends Sequelize.Model {
+            static init(sequelize) {
+                return super.init({
+                    host: {
+                        type: Sequelize.STRING(100),
+                        allowNull: false
+                    },
+                    clientSecret: {
+                        type: Sequelize.STRING(36),
+                        allowNull: false
+                    },
+                    type: {
+                        type: Sequelize.ENUM('free', 'premium'),
+                        allowNull: false
+                    }
+                }, {
+                    sequelize,
+                    timestamps: true,
+                    underscored: false,
+                    modelName: 'Domain',
+                    tableName: 'domains',
+                    paranoid: true,
+                });
+            }
+            static associate(db) {
+                // User와 Domain 은 1:N
+                // User의 기본키가 Domain에 외래키로 저장된다.
+                db.Domain.belongsTo(db.User);
+            }
+        };
+
+    2) model/index.js 에 Domain 사용을 위한 domain.js 모델을 추가 한 뒤 실행하면 DB에 반영됨.(NodePrac8과 같은 DB에 domains 테이블 추가)
+
+        const Sequelize = require('sequelize');
+        const env = process.env.NODE_ENV || 'development';
+        const config = require('../config/config')[env];
+
+        const User = require('./user');
+        const Post = require('./post');
+        const Hashtag = require('./hashtag');
+        const Domain = require('./domain')
+
+        const db = {};
+        const sequelize = new Sequelize(
+        config.database, config.username, config.password, config,
+        );
+
+        db.sequelize = sequelize;
+        db.User = User;
+        db.Post = Post;
+        db.Hashtag = Hashtag;
+        db.Domain = Domain;
+
+        User.init(sequelize);
+        Post.init(sequelize);
+        Hashtag.init(sequelize);
+        Domain.init(sequelize);
+
+        User.associate(db);
+        Post.associate(db);
+        Hashtag.associate(db);
+        Domain.associate(db);
+
+        module.exports = db;
+
+
