@@ -62,11 +62,11 @@ API SERVER
         "test": "echo \"Error: no test specified\" && exit 1"
     },
 
-    4)
+    4) 이전 프로젝트(NodePrac8)에서 routes, models, config, passport 디렉토리 복사
 
-    5)
+    5) .env 파일도 이전 NodePrac8r과 동일핟게 만들고 작성
 
-    6) 프로젝트 화면에 출력될
+    6) 프로젝트 화면에 출력될 파일을 저장하기 위해 views 디렉토리 생성
 
     7) 에러가 발생했을 때 화면에 출력될 파일을 views 디렉토리에 생성하고 작성. error.html
         
