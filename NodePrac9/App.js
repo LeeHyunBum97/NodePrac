@@ -89,8 +89,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 //라우터 설정
-/* const indexRouter = require('./routes');
-app.use('/', indexRouter); */
+const indexRouter = require('./routes'); // index.js는 생략 가능
+app.use('/', indexRouter);
 
 const authRouter = require('./routes/auth');
 app.use('/auth', authRouter);
