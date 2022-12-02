@@ -82,9 +82,7 @@ sequelize
 
 const passport = require('passport');
 const passportConfig = require('./passport');
-
 passportConfig();
-
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -94,6 +92,9 @@ app.use('/', indexRouter);
 
 const authRouter = require('./routes/auth');
 app.use('/auth', authRouter);
+
+const v1 = require('./routes/v1.js');
+app.use('/v1', v1);
 
 app.use('/img', express.static(path.join(__dirname, 'uploads')));
 //에러가 발생한 경우 처리

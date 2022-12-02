@@ -1,3 +1,32 @@
+P.S. 
+Authentication[NodePrac8]
+
+=> NodePrac8과 같은 프로젝트들은 화면 출력과 처리를 하나의 애플리케이션을 수행한다. - 서버 랜더링
+
+=> 클라이언트의 종류가 다양하고 확장 가능성이 있는 것은 고려하지 않고 서버 랜더링(서버에서 처리하고 출력을 전달)의 형태를 활용하는 경우였다.
+
+=> 안드로이드에서 동일한 서비스를 사용하고자 하는 경우 안드로이드 화면은 서버에서 랜더링이 불가능하기 때문에 안드로이드 프로젝트를 만들어야 하고 서버에 안드로이드를 위한 코드를 추가.
+=> 이 때 안드로이드 처리를 위한 별도의 URL을 생성해서 처리하게 되면 동일한 요청에 대한 URL이 두개가 생기게 된다.(좋지 않다)
+
+=> 서버는 처리과정을 통해 데이터만 주는 형태로 만들어서 클라이언트는 별도로 생성해서 데이터를 받아서 처리하도록 한다.
+=> 이렇게 되면 클라이언트 종류가 추가 되더라도 서버는 수정할 필요가 없다.
+
+=> 나아가 현재는 클라이언트들의 성능이 좋아졌기 때문에 어느정도의 처리도 가능하기 때문에 클라이언트에서도 처리하는 것이 늘고 있으며 이는 서버에서 처리하는 것보다 반응이 빠른편이다.(엣지 컴퓨팅)
+    -> JS에 스레드 추가가 대표적인 예시다.
+
+=> 물론 보안적인 요소가 필요한 것들은 서버에서 처리하거나 서버에서 랜더링 하는 편이다.(클라이언트에서 이 데이터가 어떻게 만들어졌는지 모르게 하기 위해서.)
+
+
+P.S. 부인봉쇄
+    -> 어떠한 것이든 받은 것을 받지 않았다고 하는 것을 봉쇄해야 한다.
+    -> 이러한 것에 많은 고민이 되고 있다, 특히 금융권.
+    -> 스마트폰은 UDP 통신을 기본적으로 하기 때문에 UDP 통신은 수신측에서 수신을 받은 적이 없다고 판단을 내리면 송신측에서 보낸적이 없는 것으로 처리된다.
+    -> 카카오톡 메시지의 숫자도 부인 봉쇄의 기능을 어느정도 하고 있다.
+
+P.S.
+Client <-> Web Server <-> Application Server <-> Data Server 에서
+Application Server가 랜더링을 하지않고 데이터를 제공하면 API 서버라고 하는 것으로 따로 존재하는 게 아니다.
+
 [NodePrac9]
 API SERVER
 1. API (Application Programing Interface)
@@ -443,6 +472,7 @@ API SERVER
         -> 물론 설정을 하면 서로 다른 도메인/포트 간에도 쿠키를 공유할 수는 있다, 그러나 매우 위험하다.
 
     => 서버와 클라이언트 애플리케이션의 도메인이 다른 경우 세션을 이용해서 사용자를 인증할 수 없다.
+        -> 이 때 쿠키와 세션을 사용할 수 없지만 같은 개념을 가진 Json Token 이라는 특정 키값을 만들어 이용하게 되는 것이다.
         -> 이 경우에는 서버에서 클라이언트에게 키를 발급하고 클라이언트는 서버에 요청을 할 때 키를 전송해서 인증된 사용자라는 것을 알려야한다.
         -> 이 때 키를 평문으로 전송하게 되면 중간에 가로채서 사용할 수 있다.
         -> 키 와 클라이언트 URL을 합쳐서 하나의 암호화된 문장을 생성해서 전송을 하게 되면 서버는 이를 해동해 인가된 클라리언트의 URL을 확인 할 수 있다.
@@ -479,3 +509,202 @@ API SERVER
         }
     
     4) 토큰 내용 확인 후 사용가능하게 발급처리 하는 파일인 routes/v1.js 를 작성
+        const express = require('express');
+        const { verifyToken } = require('./middlewares');
+
+        const router = express.Router();
+
+        const Domain = require('../models/domain')
+
+        router.post('/token', async(req, res) => {
+            const {clientSecret} = req.body;
+
+            try{
+                // 도메인 찾아오기
+                const domain = await Domain.findOne({
+                    where:{clientSecret},
+                    include:{
+                        model:URLSearchParams,
+                        attribute:['nick', 'id']
+                    }
+                });
+                
+                // 도메인이 등록되어 있지 않은 경우
+                if(!domain){
+                    return res.status(401).json({
+                        code: 410 ,
+                        message: "등록되지 않은 도메인 입니다."
+                    })
+                }
+
+                // 등록된 도메인의 경우 토큰 생성
+                const token = jwt.sign({
+                    id: domain.User.id,
+                    nick: domain.User.nick,
+                }, process.env.JWT_SECRET,{
+                    expiresIn: '1m',    // 유효시간
+                    issuer : 'adam' // 발급자
+                });
+
+                return res.json({
+                    code: 200,
+                    message : '토큰인 발급되었습니다.',
+                    token
+                })
+
+            }catch(error){
+                console.log(error)
+                return res.status(500).json({
+                    code: 500,
+                    message: "서버에러"
+                })
+            }
+        })
+
+        // 토큰을 확인하기 위한 처리
+        router.get('/test', verifyToken, (req, res, next) => {
+            res.json(req.decoded);
+            
+        })
+
+        module.exports = router;
+
+    5) App.js에 v1 Router 등록
+        const v1 = require('./routes/v1.js');
+        app.use('/v1', v1);
+
+6. API 서버에서 데이터를 제공하도록 작성
+    
+    1) v1.js 수정
+
+        const express = require('express');
+
+        const dotenv = require('dotenv');
+        dotenv.config();
+
+        //서버 설정
+        const app = express();
+        app.set('port', process.env.PORT);
+
+        //로그 출력을 위한 파일 과 경로를 위한 모듈 설정
+        const fs = require('fs');
+        const path = require('path');
+        //static 파일의 경로 설정
+        app.use(express.static(path.join(__dirname, 'public')));
+
+        //view template 설정
+        const nunjucks = require('nunjucks');
+        app.set('view engine', 'html');
+        nunjucks.configure('views', {
+            express: app,
+            watch: true
+        });
+        const morgan = require('morgan');
+        const FileStreamRotator = require('file-stream-rotator');
+
+        const logDirectory = path.join(__dirname, 'log');
+
+        // 로그 디렉토리 생성
+        fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
+
+        // 로그 파일 옵션 설정
+        const accessLogStream = FileStreamRotator.getStream({
+            date_format: 'YYYYMMDD',
+            filename: path.join(logDirectory, 'access-%DATE%.log'),
+            frequency: 'daily',
+            verbose: false
+        });
+
+        // 로그 설정
+        app.use(morgan('combined', {stream: accessLogStream}));
+
+        //출력하는 파일 압축해서 전송
+        const compression = require('compression');
+        app.use(compression());
+
+        //post 방식의 파라미터 읽기
+        var bodyParser = require('body-parser');
+        app.use(bodyParser.json()); // to support JSON-encoded bodies
+        app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
+            extended: true
+        }));
+
+        //쿠키 설정
+        const cookieParser = require('cookie-parser');
+        app.use(cookieParser(process.env.COOKIE_SECRET));
+
+        //세션 설정
+        const session = require("express-session");
+        var options = {
+            host: process.env.HOST,
+            port: process.env.MYSQLPORT,
+            user: process.env.USERID,
+            password: process.env.PASSWORD,
+            database: process.env.DATABASE
+        };
+
+        const MySQLStore = require('express-mysql-session')(session);
+
+        app.use(
+            session({secret: process.env.COOKIE_SECRET, resave: false, saveUninitialized: true, store: new MySQLStore(options)})
+        );
+        const {sequelize} = require('./models');
+
+        sequelize
+            .sync({force: false})
+            .then(() => {
+                console.log('데이터베이스 연결 성공');
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+
+        const passport = require('passport');
+        const passportConfig = require('./passport');
+        passportConfig();
+        app.use(passport.initialize());
+        app.use(passport.session());
+
+        //라우터 설정
+        const indexRouter = require('./routes'); // index.js는 생략 가능
+        app.use('/', indexRouter);
+
+        const authRouter = require('./routes/auth');
+        app.use('/auth', authRouter);
+
+        const v1 = require('./routes/v1.js');
+        app.use('/v1', v1);
+
+        app.use('/img', express.static(path.join(__dirname, 'uploads')));
+        //에러가 발생한 경우 처리
+        app.use((req, res, next) => {
+            const err = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
+            err.status = 404;
+            next(err);
+        });
+
+        //에러가 발생한 경우 처리, req, res 앞에 err가 있다면 error를 처리하는 구문이다.
+        app.use((err, req, res, next) => {
+            res.locals.message = err.message;
+            res.locals.error = process.env.NODE_ENV !== 'production'
+                ? err
+                : {};
+            res.status(err.status || 500);
+            res.render('error');
+        });
+
+        app.listen(app.get('port'), () => {
+            console.log(app.get('port'), '번 포트에서 대기 중');
+        });
+
+7. Client Application 제작(NodePrac9-Client)
+    
+    1) Node JS 초기화(npm init)후 package.json script 절 nodemon 추가(start: "nodemon App.js")
+
+    2) 필요한 패키지 설치
+        npm install express dotenv axios cookie-parser express-session morgan nunjucks
+        npm install --save-dev nodemon
+
+        => axios : JS에서 ajax나 fetch api 대신에 사용할 수 있는 JS 웹 요청 처리 라이브러리
+
+    3) App.js 파일을 생성하고 작성.
