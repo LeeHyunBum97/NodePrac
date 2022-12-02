@@ -4,11 +4,16 @@ const { verifyToken, apiLimiter } = require('./middlewares');
 const jwt = require('jsonwebtoken'); // json token 라이브러리
 const {Domain, User, Post, Hashtag} = require('../models')// model 들 불러오기
 
+const router = express.Router();
+
 const cors = require('cors');
-const { urlencoded } = require('express');
+
+// 무조건적으로 CORS를 허용
 router.use(cors({
     credentials: true
 }))
+
+// Domain에 등록된 경우만 전송할 수 있도록 설정하는 것.
 router.use(async (req, res, next) => {
     // 현재 요청 도메인이 데이터베이스에 등록된 도메인인지 찾아오기
     const domain = await Domain.findOne({
@@ -23,8 +28,6 @@ router.use(async (req, res, next) => {
         next();
     }
 })
-
-const router = express.Router();
 
 // 데이터를 반환하는 요청을 처리
 router.get('/posts/my', apiLimiter, verifyToken, (req, res, next) => {

@@ -1072,6 +1072,36 @@ API SERVER
 
         => NodePrac9 의 routes/v2.js 에서 cors 처리 추가
             const cors = require('cors');
+
+            // 무조건적으로 CORS를 허용
             router.use(cors({
                 credentials: true
             }))
+
+            // Domain에 등록된 경우만 전송할 수 있도록 설정하는 것.
+            router.use(async (req, res, next) => {
+                // 현재 요청 도메인이 데이터베이스에 등록된 도메인인지 찾아오기
+                const domain = await Domain.findOne({
+                    where:{host:url.parse(req.get('origin')).host}
+                })
+                if(domain){
+                    cors({
+                        origin: req.get('origin'),
+                        credentials: true
+                    })(req, res, next);
+                }else{
+                    next();
+                }
+            })
+
+9. 기타
+    1) node에서 다른 서버의 데이터를 가져오는 모듈로 request 모듈을 주로 사용한다, (PPT 참고)
+
+    2) websocket
+        => 클라이언트와 서버의 연결을 유지한 상태로 데이터를 주고 받을 수 있는 HTML5 spec
+        => http 나 https 는 연결을 유지하지 않고 header의 오버헤드가 큰 편이다.
+        => 짧은 메시지를 자주 전송하는 시스템에서 적합하지 않은 프로토콜이다.
+
+    3) push - Server Sent Events
+        => 클라이언트의 요청이 없어도 서버가 메시지를 전송하는 것
+        => 마지막 예제는 물건을 등록하고 1초마다 시간이 경과한 것을 서버가 클라이언트에게 전송을 하고 상품을 등록한지 하루가 지나면 낙찰을 해서 최고가를 입력한 유저에게 등록하는 프로젝트.
