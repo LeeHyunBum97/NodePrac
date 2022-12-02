@@ -78,7 +78,7 @@ router.post('/token', apiLimiter, async(req, res) => {
 
         return res.json({
             code: 200,
-            message : '토큰인 발급되었습니다.',
+            message : '토큰dl 발급되었습니다.',
             token
         })
 
