@@ -31,7 +31,7 @@ router.post('/token', async(req, res) => {
         const domain = await Domain.findOne({
             where:{clientSecret},
             include:{
-                model:URLSearchParams,
+                model:User,
                 attribute:['nick', 'id']
             }
         });

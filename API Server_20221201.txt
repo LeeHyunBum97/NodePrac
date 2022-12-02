@@ -512,10 +512,28 @@ API SERVER
         const express = require('express');
         const { verifyToken } = require('./middlewares');
 
+        const jwt = require('jsonwebtoken'); // json token 라이브러리
+        const {Domain, User, Post, Hashtag} = require('../models')// model 들 불러오기
+
         const router = express.Router();
 
-        const Domain = require('../models/domain')
+        // 데이터를 반환하는 요청을 처리
+        router.get('/posts/my', verifyToken, (req, res, next) => {
+            Post.findAll({where:{userId:req.decoded.id}})
+            .then((posts) => {
+                console.log(posts);
+                res.json({code:200, payload: posts}); // -> 렌더링 하지 않고 json 문자열로 파싱해서 데이터를 넘겨주면 API Server
+            })
+            .catch((error) => {
+                console.error(error);
+                return res.status(500).json({
+                    code: 500,
+                    message: '서버에러'
+                })
+            })
+        })
 
+        // 토큰 발급 처리
         router.post('/token', async(req, res) => {
             const {clientSecret} = req.body;
 
@@ -524,7 +542,7 @@ API SERVER
                 const domain = await Domain.findOne({
                     where:{clientSecret},
                     include:{
-                        model:URLSearchParams,
+                        model:User,
                         attribute:['nick', 'id']
                     }
                 });
@@ -708,3 +726,150 @@ API SERVER
         => axios : JS에서 ajax나 fetch api 대신에 사용할 수 있는 JS 웹 요청 처리 라이브러리
 
     3) App.js 파일을 생성하고 작성.
+        const express = require('express');
+        const morgan = require('morgan');
+        const cookieParser = require('cookie-parser');
+        const session = require('express-session');
+        const nunjucks = require('nunjucks');
+        const dotenv = require('dotenv');
+
+        dotenv.config();
+        //const indexRouter = require('./routes');
+
+        const app = express();
+        app.set('port', process.env.PORT || 4000);
+        app.set('view engine', 'html');
+        nunjucks.configure('views', {
+            express: app,
+            watch: true
+        });
+
+        app.use(morgan('dev'));
+        app.use(cookieParser(process.env.COOKIE_SECRET));
+        app.use(session({
+            resave: false,
+            saveUninitialized: false,
+            secret: process.env.COOKIE_SECRET,
+            cookie: {
+                httpOnly: true,
+                secure: false
+            }
+        }));
+
+        //app.use('/', indexRouter);
+
+        app.use((req, res, next) => {
+            const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
+            error.status = 404;
+            next(error);
+        });
+        app.use((err, req, res, next) => {
+            res.locals.message = err.message;
+            res.locals.error = process.env.NODE_ENV !== 'production'
+                ? err
+                : {};
+            res.status(err.status || 500);
+            res.render('error');
+        });
+
+        app.listen(app.get('port'), () => {
+            console.log(app.get('port'), '번 포트에서 대기중');
+        });
+
+    4) /veiws 디렉토리 생성 후 에러 발생시 출력될 하면인 /views/error.html 생성
+        <h1>{{message}}</h1>
+        <h2>{{error.status}}</h2>
+        <pre>{{error.stack}}</pre>
+
+    5) .env 파일 설정하는데 NodePrac9 에서 http://localhost:4000 번으로 Key를 발급해두고 추가한다.
+        COOKIE_SECRET = NodeClient
+        CLIENT_SECRET = 2a1749d9-9b7f-4da0-ac45-b46a9aca3975
+    
+    6) 라우팅 처리할 /routes 디렉토리에 /routes/index.js 생성후 발급 테스트 코드 작성(localhost:4000/test)후 확인한 다음에 실제 토큰 발급 처리후 App.js에 index.js router 주석 해제
+       그 다음 localhost:4000/my/post에서 확인
+        
+        const express = require('express');
+        const axios = require('axios');
+
+        const router = express.Router();
+
+        // 매번 동일한 요청을 위한 URL을 상수로 설정
+        const URL = "http://localhost:8000/v1";
+
+        // AJAX 요청을 할 때 누가 요청했는지 확인해주기 위해서 origin header를 추가한다.
+        axios.defaults.headers.origin = 'http://localhost:4000';
+
+        // token 발급 동작 TEST
+        router.get('/test', async(req, res, next) => {
+            try{
+                if(!req.session.jwt){
+                    const tokenResult = await axios.post("http://localhost:8000/v1/token", {
+                        clientSecret : process.env.CLIENT_SECRET
+                    });
+
+                    if(tokenResult.data && tokenResult.data.code == 200){
+                        // 토큰 발급 성공
+                        req.session.jwt = tokenResult.data.token;
+                    }else{
+                        // 토큰 발급 실패
+                        return res.json(tokenResult.data)
+                    }
+                }
+                // 토큰 내용확인
+                const result = await axios.get('http://localhost:8000/v1/test', {
+                    headers: {authorization:req.session.jwt}
+                })
+                return res.json(result.data);
+
+            }catch(error){
+                console.error(error);
+                return next(error);
+            }
+        });
+
+        // 토큰 발급 코드
+        const request = async(req, api) => {
+            try{
+                if(!req.session.jwt){
+                    const tokenResult = await axios.post(`${URL}/token`, {
+                        clientSecret : process.env.CLIENT_SECRET
+                    });
+                    req.session.jwt = tokenResult.data.token;
+                }
+                // 토큰 내용확인
+                const result = await axios.get(`${URL}/${api}`, {
+                    headers: {authorization:req.session.jwt}
+                })
+                return result;
+
+            }catch(error){
+                // 토큰 유효기간이 만료되면
+                if(error.response.status === 419){
+                    // 기존 토큰 삭제
+                    delete req.session.jwt;
+                    // 다시 토큰을 생성해달라고 요청
+                    return request(req, api);
+                }
+                return error.response;
+            }
+        }
+
+        router.get('/my/post', async(req, res, next) => {
+            try{
+                // NodePrac9의 /routes/v1.js에서 설정한 주소와 동일한 주소로 요청
+                const result = await request(req, '/posts/my');
+                res.json(result.data);
+            }catch(error){
+                console.error(error);
+                return next(error)
+            }
+        })
+
+        module.exports = router;
+    
+        => 값 확인 할 때 안넘어오면 NodePrac8에서 현재 아이디로 게시글 작성하기
+
+8. 사용량 제한
+
+    => API Server를 만들었을 때 데이터를 무제한 제공하게 되면 트래픽이 많이 발생해서 속도가 느려질 수 있다.
+    => Ddos공격의 대상이 될 때 매우 취약하다.
