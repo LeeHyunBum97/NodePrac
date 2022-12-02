@@ -869,7 +869,151 @@ API SERVER
     
         => 값 확인 할 때 안넘어오면 NodePrac8에서 현재 아이디로 게시글 작성하기
 
-8. 사용량 제한
+8. 서버(NodePrac9) 수정 --> 버전 2를 생성하는 것.(기존서비스를 지키기 위해, 그래서 v2를 만들 것.)
 
-    => API Server를 만들었을 때 데이터를 무제한 제공하게 되면 트래픽이 많이 발생해서 속도가 느려질 수 있다.
-    => Ddos공격의 대상이 될 때 매우 취약하다.
+    1) 사용량 제한
+        => API Server를 만들었을 때 데이터를 무제한 제공하게 되면 트래픽이 많이 발생해서 속도가 느려질 수 있다.
+        => Ddos공격의 대상이 될 때 매우 취약하다.
+        => 이 때문에 일정한 주기를 가지고 제한을 하기도 하고 사이즈나 횟수 제한을 가하기도 합니다.
+        => Kakao 같은 경우 사이즈, 횟수 제한을 동시에 한다.
+
+    2) 기존 서버를 수정했을 때 처리
+        => 기존코드를 무조건 바꾸는 것은 위험
+        => 기존 코드(이전 버전)는 그대로 두고 deprecated나 서비스 중지 메시지를 전송하는 형태로 새로운 내용을 적용하는 것이 좋다.
+
+    3) Node의 middleware의 개념과 Java의 Filter, Spring의 Interceptor 와 AOP
+        => 실제 처리를 하기전에 후에 동작하는 로직을 작성하는 용도로 사용한다.
+        => 위의 것들을 사용하는 경우는 Business Logic과 Common Concern의 분리를 하기 위해서 공통된 처리를 해야하는 경우다.
+            -> Ex> 매번 어떤 비지니스 로직에서 로그인 여부를 묻게 된다면 이 로그인 여부를 묻는 것을 분리해 낸다.
+            -> Ex> 또한 사용량 제한 같은 경우도 트래픽 발생감소를 위한 것인데, 이는 매번 API에 요청을 할 때 마다 사용량 제한을 확인하는 것을 따로 분리해 내는 예시가 있다.
+        
+        => 참고로 Spring은 전체가 Proxy 패턴이다.
+
+    4) 사용량 제한을 위한 NodePrac9 수정
+        => 사용량 제한을 위한 패키지 설치
+            -> npm install express-rate-limit
+
+        => /routes/middlewares.js 에 사용량 제한을 위한 middleware 추가
+            // 사용량 제한을 위한 미들웨어
+            const RateLimit = require('express-rate-limit');
+            exports.apiLimiter = RateLimit({
+                // 1분안에 10번 초과 불가능하고 딜레이는 없게 설정
+                windowMs : 60 * 1000, // 1분
+                max : 10,
+                delayMs : 0,
+                hadler(req, res){
+                    res.status(this.statusCode).json({
+                    code: this.statusCode,
+                    message: '1분 단위로 요청을 해야 합니다.'
+                    });
+                } 
+            });
+
+            // 구버전 API(v1.js 를 통한 요청) 시 동작할 미들웨어
+            exports.deprecated = (req, res) => {
+                res.status(410).json({
+                    code: 410,
+                    message: '새로운 버전이 나왔습니다, 새버전을 이용해주세요.'
+                })
+            }
+
+    5) /routes/v1.js 의 새로운 버전인 /routes/v2.js를 기존의 코드를 가져와서 새롭게 생성한뒤 사용량 제한 추가.
+        => const { verifyToken, apiLimiter } = require('./middlewares'); 과 모든 토큰 발급 요청에서 apiLimiter 미들웨어를 추가하면 된다.
+
+        const express = require('express');
+        const { verifyToken, apiLimiter } = require('./middlewares');
+
+        const jwt = require('jsonwebtoken'); // json token 라이브러리
+        const {Domain, User, Post, Hashtag} = require('../models')// model 들 불러오기
+
+        const router = express.Router();
+
+        // 데이터를 반환하는 요청을 처리
+        router.get('/posts/my', apiLimiter, verifyToken, (req, res, next) => {
+            Post.findAll({where:{userId:req.decoded.id}})
+            .then((posts) => {
+                console.log(posts);
+                res.json({code:200, payload: posts}); // -> 렌더링 하지 않고 json 문자열로 파싱해서 데이터를 넘겨주면 API Server
+            })
+            .catch((error) => {
+                console.error(error);
+                return res.status(500).json({
+                    code: 500,
+                    message: '서버에러'
+                })
+            })
+        })
+
+        // 토큰 발급 처리
+        router.post('/token', async(req, res) => {
+            const {clientSecret} = req.body;
+
+            try{
+                // 도메인 찾아오기
+                const domain = await Domain.findOne({
+                    where:{clientSecret},
+                    include:{
+                        model:User,
+                        attribute:['nick', 'id']
+                    }
+                });
+                
+                // 도메인이 등록되어 있지 않은 경우
+                if(!domain){
+                    return res.status(401).json({
+                        code: 410 ,
+                        message: "등록되지 않은 도메인 입니다."
+                    })
+                }
+
+                // 등록된 도메인의 경우 토큰 생성
+                const token = jwt.sign({
+                    id: domain.User.id,
+                    nick: domain.User.nick,
+                }, process.env.JWT_SECRET,{
+                    expiresIn: '1m',    // 유효시간
+                    issuer : 'adam' // 발급자
+                });
+
+                return res.json({
+                    code: 200,
+                    message : '토큰인 발급되었습니다.',
+                    token
+                })
+
+            }catch(error){
+                console.log(error)
+                return res.status(500).json({
+                    code: 500,
+                    message: "서버에러"
+                })
+            }
+        })
+
+        // 토큰을 확인하기 위한 처리
+        router.get('/test', apiLimiter, verifyToken, (req, res, next) => {
+            res.json(req.decoded);
+            
+        })
+
+        module.exports = router;
+
+    6) /routes/v1.js 인 기존 버전의 모든 요청을 막기 위해서 v1.js 에 모든 라우팅 처리에 deprecated 적용 추가하고 localhost:4000/test나 my/post 로 접속후 확인
+        app.use(deprecated);
+
+    7) App.js 에서 구버전 API v1.js로 가는 요청을 새 버전 v2.js로 돌린다.
+        // 구 버전 API v1.js
+        /* const v1 = require('./routes/v1.js');
+        app.use('/v1', v1); */
+
+        const v2 = require('./routes/v1.js');
+        app.use('/v1', v2);
+
+    8) NodePrac9-Client(Client)의 /routes/index.js에서 기존 버전으로의 요청을 새 버전 v2.js로 돌린다.
+        // 매번 동일한 요청을 위한 URL을 상수로 설정
+        // 구버전 v1으로의 요청 차단
+        /* const URL = "http://localhost:8000/v1"; */
+
+        // 매번 동일한 요청을 위한 URL을 상수로 설정
+        // 새버전 v2로 요청 돌리기
+        const URL = "http://localhost:8000/v2";

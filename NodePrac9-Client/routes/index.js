@@ -4,7 +4,13 @@ const axios = require('axios');
 const router = express.Router();
 
 // 매번 동일한 요청을 위한 URL을 상수로 설정
-const URL = "http://localhost:8000/v1";
+// 구버전 v1으로의 요청 차단
+/* const URL = "http://localhost:8000/v1"; */
+
+// 매번 동일한 요청을 위한 URL을 상수로 설정
+// 새버전 v2로 요청 돌리기
+const URL = "http://localhost:8000/v2";
+
 
 // AJAX 요청을 할 때 누가 요청했는지 확인해주기 위해서 origin header를 추가한다.
 axios.defaults.headers.origin = 'http://localhost:4000';

@@ -19,6 +19,7 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-mysql-session": "^2.1.8",
+    "express-rate-limit": "^6.7.0",
     "express-session": "^1.17.3",
     "file-stream-rotator": "^1.0.0",
     "jsonwebtoken": "^8.5.1",

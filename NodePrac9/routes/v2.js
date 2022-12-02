@@ -1,16 +1,13 @@
 const express = require('express');
-const { verifyToken, deprecated } = require('./middlewares');
+const { verifyToken, apiLimiter } = require('./middlewares');
 
 const jwt = require('jsonwebtoken'); // json token 라이브러리
 const {Domain, User, Post, Hashtag} = require('../models')// model 들 불러오기
 
 const router = express.Router();
 
-// v1.js 에 모든 라우팅 처리에 deprecated 적용
-router.use(deprecated);
-
 // 데이터를 반환하는 요청을 처리
-router.get('/posts/my', verifyToken, (req, res, next) => {
+router.get('/posts/my', apiLimiter, verifyToken, (req, res, next) => {
     Post.findAll({where:{userId:req.decoded.id}})
     .then((posts) => {
         console.log(posts);
@@ -72,7 +69,7 @@ router.post('/token', async(req, res) => {
 })
 
 // 토큰을 확인하기 위한 처리
-router.get('/test', verifyToken, (req, res, next) => {
+router.get('/test', apiLimiter, verifyToken, (req, res, next) => {
     res.json(req.decoded);
     
 })

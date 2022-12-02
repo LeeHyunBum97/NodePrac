@@ -16,7 +16,8 @@ exports.isNotLoggedIn = (req, res, next) => {
       res.redirect(`/?error=${message}`);
     }
   };
-  
+
+// 토큰 발급 미들웨어
 const jwt = require("jsonwebtoken");
 exports.verifyToken = (req, res, next) => {
   try{
@@ -38,4 +39,27 @@ exports.verifyToken = (req, res, next) => {
       message: "유효하지 않은 토큰입니다."
     })
   }
+}
+
+// 사용량 제한을 위한 미들웨어
+const RateLimit = require('express-rate-limit');
+exports.apiLimiter = RateLimit({
+  // 1분안에 10번 초과 불가능하고 딜레이는 없게 설정
+  windowMs : 60 * 1000, // 1분
+  max : 10,
+  delayMs : 0,
+  hadler(req, res){
+    res.status(this.statusCode).json({
+      code: this.statusCode,
+      message: '1분 단위로 요청을 해야 합니다.'
+    });
+  } 
+});
+
+// 구버전 API(v1.js 를 통한 요청) 시 동작할 미들웨어
+exports.deprecated = (req, res) => {
+  res.status(410).json({
+    code: 410,
+    message: '새로운 버전이 나왔습니다, 새버전을 이용해주세요.'
+  })
 }
