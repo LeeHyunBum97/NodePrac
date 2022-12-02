@@ -19,7 +19,7 @@ axios.defaults.headers.origin = 'http://localhost:4000';
 router.get('/test', async(req, res, next) => {
     try{
         if(!req.session.jwt){
-            const tokenResult = await axios.post("http://localhost:8000/v1/token", {
+            const tokenResult = await axios.post("http://localhost:8000/v2/token", {
                 clientSecret : process.env.CLIENT_SECRET
             });
 
@@ -32,7 +32,7 @@ router.get('/test', async(req, res, next) => {
             }
         }
         // 토큰 내용확인
-        const result = await axios.get('http://localhost:8000/v1/test', {
+        const result = await axios.get('http://localhost:8000/v2/test', {
             headers: {authorization:req.session.jwt}
         })
         return res.json(result.data);
@@ -69,16 +69,20 @@ const request = async(req, api) => {
         return error.response;
     }
 }
-
-router.get('/my/post', async(req, res, next) => {
+// NodePrac9의 /routes/v2.js에서 설정한 주소와 동일한 주소로 요청
+router.get('/mypost', async(req, res, next) => {
     try{
-        // NodePrac9의 /routes/v1.js에서 설정한 주소와 동일한 주소로 요청
+        
         const result = await request(req, '/posts/my');
         res.json(result.data);
     }catch(error){
         console.error(error);
         return next(error)
     }
+})
+
+router.get('/', (req, res) => {
+    res.render('main', {key : process.env.CLIENT_SECRET})
 })
 
 module.exports = router;

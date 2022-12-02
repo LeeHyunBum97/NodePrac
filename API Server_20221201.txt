@@ -1017,3 +1017,61 @@ API SERVER
         // 매번 동일한 요청을 위한 URL을 상수로 설정
         // 새버전 v2로 요청 돌리기
         const URL = "http://localhost:8000/v2";
+
+    9) CORS(Cross-Origin Resource Sharing)
+
+    => SOP(Same Origin Policy = 동일 출처 정책)
+        -> 어떤 출처에서 불러온 문서나 스크립트가 다른 출처에서 가져온 리소스와 상호작용 하는 것을 제한하는 브라우저의 보안 방식.
+
+        -> 브라우저에서는 XMLhttpRequest(ajax) 와 Fetch API 같은 경우는 다른 출처에 리소스를 요청할 때 적용한다.
+
+        -> img, link, script, video, audio, object, embed, applet 태그는 SOP를 적용 받지 않는다.
+
+        -> 그래서 나온 것이 CORS(교차 출처 정책)
+        -> 추가 HTTP 헤더를 사용해서 한 출처에서 실행 중인 웹 애플리케이션이 다른 출처의 자원에 접근할 수 있는 권한을 부여해서 브라우저에 알려주는 것.
+
+        -> ajax 나 fetch api 가 다른 출처의 데이터를 가져와서 사용하기 위해서는 올바른 CORS 헤더를 포함한 응답을 반환해야 한다.
+
+        -> 서버를 만들 때 위의 부분을 고려해서 작성해야 하고 이미 만들어진 경우나 다른 곳에서 만든 API를 이용해야 하는 경우에는 Client 에서 Proxy를 이용해야 한다.
+
+    10) ajax 오류
+        => 클라이언트 프로젝트의 routes 디렉토리의 index.js 파일에 라우팅 코드 추가
+            router.get('/', (req, res) => {
+                res.redirect('main', {key : process.env.CLIENT_SECRET})
+            })
+
+        => views/main.html 생성 후 localhost:4000 으로 접속해서 Cors에러 확인
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Document</title>
+        </head>
+        <body>
+            <div id="result"></div>
+            <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+            <script>
+                axios.get('http://localhost:8000/v2/token', {
+                    clientSecret:'{{key}}'
+                })
+                .then(res => {
+                    document.getElementById('result').innerHTML = JSON.stringify(res.data);
+                })
+                .catch(error => {
+                    console.log(error)
+                })
+            </script>
+        </body>
+        </html>
+
+    11) 앞에서 확인한 CORS 에러에 대한 설정 추가
+        => NodePrac9에서 cors 구현 패키지를 설치
+            -> npm install cors
+
+        => NodePrac9 의 routes/v2.js 에서 cors 처리 추가
+            const cors = require('cors');
+            router.use(cors({
+                credentials: true
+            }))

@@ -4,6 +4,26 @@ const { verifyToken, apiLimiter } = require('./middlewares');
 const jwt = require('jsonwebtoken'); // json token 라이브러리
 const {Domain, User, Post, Hashtag} = require('../models')// model 들 불러오기
 
+const cors = require('cors');
+const { urlencoded } = require('express');
+router.use(cors({
+    credentials: true
+}))
+router.use(async (req, res, next) => {
+    // 현재 요청 도메인이 데이터베이스에 등록된 도메인인지 찾아오기
+    const domain = await Domain.findOne({
+        where:{host:url.parse(req.get('origin')).host}
+    })
+    if(domain){
+        cors({
+            origin: req.get('origin'),
+            credentials: true
+        })(req, res, next);
+    }else{
+        next();
+    }
+})
+
 const router = express.Router();
 
 // 데이터를 반환하는 요청을 처리
@@ -23,7 +43,7 @@ router.get('/posts/my', apiLimiter, verifyToken, (req, res, next) => {
 })
 
 // 토큰 발급 처리
-router.post('/token', async(req, res) => {
+router.post('/token', apiLimiter, async(req, res) => {
     const {clientSecret} = req.body;
 
     try{
@@ -68,10 +88,11 @@ router.post('/token', async(req, res) => {
     }
 })
 
+// 토큰을 TEST 하기 위한 처리
 // 토큰을 확인하기 위한 처리
-router.get('/test', apiLimiter, verifyToken, (req, res, next) => {
+router.get('/test', apiLimiter, verifyToken, (req, res) => {
     res.json(req.decoded);
-    
 })
+
 
 module.exports = router;
